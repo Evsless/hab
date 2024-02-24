@@ -31,11 +31,16 @@ class ads1115:
         reg = self._r_buff[0] << 8 | self._r_buff[1]
         return reg & ADS1115_MASK_CFG_OP_STATUS
 
+    def _to_int(self, val):
+        if val > 0x7FFF:
+            val -= (0x01 << 16)
+
+        return val
 
     def read(self, channel):
         self._config &= ADS1115_MASK_CLEAR_CHANNEL
         self._write_reg(ADS1115_ADDR_CONF_REG,
-                        self._config | ADS1115_MASK_CFG_OP_STATUS | (channel + 0x04) << 12)
+                        self._config | ADS1115_MASK_CFG_OP_STATUS | channel << 12)
         
         while not self._conv_ready():
             pass
@@ -43,4 +48,7 @@ class ads1115:
         self._set_active_reg(ADS1115_ADDR_CONV_REG)
         self._read_active_reg()
 
-        return self._r_buff
+        vol_raw = (self._r_buff[0] << 8) | (self._r_buff[1] & 0xFF)
+        vol_raw = self._to_int(vol_raw)
+
+        return vol_raw
