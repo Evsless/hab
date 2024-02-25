@@ -11,12 +11,15 @@ from ad527x import AD5272_REG
 from icm20x.icm20948 import icm20948
 from icm20x.utils    import *
 
+from sht4x.sht40 import sht40
+
 i2c0 = busio.I2C(board.D1, board.D0)
 i2c1 = busio.I2C(board.D3, board.D2)
 
 ads1115_1 = ads1115(0x49,  i2c1)
 ad5272_1  = ad5272(0x2c,   i2c1)
 icm20948  = icm20948(0x69, i2c0)
+sht40     = sht40(0x44, i2c0)
 
 wiper_pos = 80
 
@@ -76,9 +79,12 @@ while True:
     voltage = ads1115_1.read(ADS1115_CH.CH01.value)
     digipot = ad5272_1.read(AD5272_REG.RDAC_R.value)
     fifo_buff, fifo_len  = icm20948.read_fifo()
+    sht_temp, sht_humid  = sht40.read_lpres()
 
-    print(f" ADC CH0 VALUE: {voltage}")
+    print(f"ADC CH0 VALUE: {voltage}")
     print(f"DIGIPOT VALUE: {digipot}")
-    print(f"     FIFO LEN: {fifo_len}\n")
+    print(f"     FIFO LEN: {fifo_len}")
+    print(f"     SHT TEMP: {sht_temp}")
+    print(f"    SHT_HUMID: {sht_humid}\n")
     # wiper_pos += 1
     time.sleep(0.33)
