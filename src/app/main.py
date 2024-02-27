@@ -13,6 +13,8 @@ from icm20x.utils    import *
 
 from sht4x.sht40 import sht40
 
+from ds3231.ds3231 import ds3231
+
 i2c0 = busio.I2C(board.D1, board.D0)
 i2c1 = busio.I2C(board.D3, board.D2)
 
@@ -20,6 +22,7 @@ ads1115_1 = ads1115(0x49,  i2c1)
 ad5272_1  = ad5272(0x2c,   i2c1)
 icm20948  = icm20948(0x69, i2c0)
 sht40     = sht40(0x44, i2c0)
+ds3231  = ds3231(0x68, i2c0)
 
 wiper_pos = 80
 
@@ -76,11 +79,13 @@ print(f"z accel value: {za}\n")
 while True:
     ad5272_1.write_rdac(wiper_pos)
 
+    begin = time.time()
     voltage = ads1115_1.read(ADS1115_CH.CH01.value)
     digipot = ad5272_1.read(AD5272_REG.RDAC_R.value)
     fifo_buff, fifo_len  = icm20948.read_fifo()
     sht_temp, sht_humid  = sht40.read_lpres()
-
+    hours, minutes, sec  = ds3231.read_time()
+    print(f"  DS3231 TIME: {hours}:{minutes}:{sec}")
     print(f"ADC CH0 VALUE: {voltage}")
     print(f"DIGIPOT VALUE: {digipot}")
     print(f"     FIFO LEN: {fifo_len}")
