@@ -2,6 +2,8 @@ import board
 import busio
 import time
 
+from mprls.mprls_025 import MprlsDriver
+
 from ads111x.ads1115 import ads1115
 from ads111x import ADS1115_CH
 
@@ -18,6 +20,7 @@ from ds3231.ds3231 import ds3231
 i2c0 = busio.I2C(board.D1, board.D0)
 i2c1 = busio.I2C(board.D3, board.D2)
 
+mprls     = MprlsDriver(0x18, i2c0)
 ads1115_1 = ads1115(0x49,  i2c1)
 ad5272_1  = ad5272(0x2c,   i2c1)
 icm20948  = icm20948(0x69, i2c0)
@@ -85,11 +88,13 @@ while True:
     fifo_buff, fifo_len  = icm20948.read_fifo()
     sht_temp, sht_humid  = sht40.read_lpres()
     hours, minutes, sec  = ds3231.read_time()
+    mprls_humidity       = mprls.read()
     print(f"  DS3231 TIME: {hours}:{minutes}:{sec}")
     print(f"ADC CH0 VALUE: {voltage}")
     print(f"DIGIPOT VALUE: {digipot}")
     print(f"     FIFO LEN: {fifo_len}")
     print(f"     SHT TEMP: {sht_temp}")
     print(f"    SHT_HUMID: {sht_humid}\n")
+    print(f"    MPRLS_HUM: {mprls_humidity}\n")
     # wiper_pos += 1
     time.sleep(0.33)
