@@ -1,0 +1,23 @@
+/dts-v1/;
+/plugin/;
+/ {
+	compatible = "brcm,bcm2712";
+	fragment@0 {
+		target = <&i2c0>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			pressure@18 {
+				compatible = "honeywell,mprls0025pa";
+				reg = <0x18>;
+				honeywell,pmin-pascal = <0>;
+				honeywell,pmax-pascal = <172369>;
+				honeywell,transfer-function = <1>;
+				vdd-supply = <&rp1_vdd_3v3>;
+
+				status = "okay";
+			};
+		};
+	};
+};

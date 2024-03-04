@@ -1,4 +1,4 @@
-obj-m += mprls0025.o
+obj-m += mprls025.o
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
