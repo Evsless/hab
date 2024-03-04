@@ -1,0 +1,16 @@
+/dts-v1/;
+/plugin/;
+/ {
+	compatible = "brcm,bcm2712";
+	fragment@0 {
+		target-path = "/";
+		__overlay__ {
+			my_device {
+				compatible = "hab,mydev";
+				status = "okay";
+				label = "hab_dtoverlay_test";
+				my_value = <69>;
+			};
+		};
+	};
+};
