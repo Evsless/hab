@@ -1,2 +1,10 @@
+.*
 *.pyo
 *.pyc
+
+*.dtbo
+*.ko
+*.o
+*.symvers
+*.order
+*.mod*

@@ -12,7 +12,8 @@ mprls0025.dtbo: mprls0025.dts
 clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
 
-.PHONY: dtoverlay_load
 dtoverlay_load:
 	@sudo modprobe industrialio
 	@sudo dtoverlay mprls0025.dtbo
+
+.PHONY: dtoverlay_load

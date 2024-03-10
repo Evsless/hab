@@ -1,0 +1,43 @@
+/dts-v1/;
+/plugin/;
+/ {
+	compatible = "brcm,bcm2712";
+	fragment@0 {
+		target = <&rp1_gpio>;
+		__overlay__ {
+			mprls_eoc_5: mprls_eoc_5 {
+				function = "gpio";
+				pins = "gpio5";
+				bias-pull-up;
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&i2c0>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			pressure@18 {
+				compatible = "honeywell,mprls0025pa";
+				reg = <0x18>;
+
+				reset-gpios = <&rp1_gpio 6 0>;
+
+				pinctrl-names = "default";
+				pinctrl-0 = <&mprls_eoc_5>;
+
+				interrupt-parent = <&rp1_gpio>;
+				interrupts = <5 1>;
+
+				honeywell,pmin-pascal = <0>;
+				honeywell,pmax-pascal = <172369>;
+				honeywell,transfer-function = <1>;
+				vdd-supply = <&rp1_vdd_3v3>;
+
+				status = "okay";
+			};
+		};
+	};
+};

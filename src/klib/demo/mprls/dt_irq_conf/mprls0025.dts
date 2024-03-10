@@ -3,6 +3,17 @@
 / {
 	compatible = "brcm,bcm2712";
 	fragment@0 {
+		target = <&rp1_gpio>;
+		__overlay__ {
+			mprls_eoc_5: mprls_eoc_5 {
+				function = "gpio";
+				pins = "gpio5";
+				bias-pull-up;
+			};
+		};
+	};
+
+	fragment@1 {
 		target = <&i2c0>;
 		__overlay__ {
 			#address-cells = <1>;
@@ -11,8 +22,13 @@
 			pressure@18 {
 				compatible = "honeywell,mprls0025pa";
 				reg = <0x18>;
+
+				pinctrl-names = "default";
+				pinctrl-0 = <&mprls_eoc_5>;
+
 				interrupt-parent = <&rp1_gpio>;
-				interrupts = <5 IRQ_TYPE_EDGE_FALLING>;
+				interrupts = <5 1>;
+
 				honeywell,pmin-pascal = <0>;
 				honeywell,pmax-pascal = <172369>;
 				honeywell,transfer-function = <1>;
