@@ -244,7 +244,7 @@ static const struct iio_info mprls_info = {
     .read_raw = mprls_read_raw,
 };
 
-static int mprls_probe(struct i2c_client *client, const struct i2c_device_id *id) {
+static int mprls_probe(struct i2c_client *client) {
     int ret;
     struct mprls_data *data;
     struct iio_dev *indio_dev;

@@ -1,0 +1,28 @@
+/dts-v1/;
+/plugin/;
+/ {
+	compatible = "brcm,bcm2712";
+	fragment@0 {
+		target = <&i2c0>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			adc@49 {
+				compatible = "ti,ads1015";
+				reg = <0x49>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				channel@0 {
+					reg = <0>;
+				};
+				channel@2 {
+					reg = <2>;
+					ti,gain = <3>;
+					ti,datarate = <5>;
+				};
+			};
+		};
+	};
+
+};
