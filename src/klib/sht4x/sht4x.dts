@@ -1,0 +1,19 @@
+/dts-v1/;
+/plugin/;
+/ {
+	compatible = "brcm,bcm2712";
+	fragment@0 {
+		target = <&i2c0>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			sht4x@44 {
+				compatible = "sensirion,sht4x";
+				reg = <0x44>;
+				status = "okay";
+			};
+		};
+	};
+
+};
