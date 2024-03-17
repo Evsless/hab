@@ -112,9 +112,6 @@ static int sht4x_read_all(struct sht4x_data *data) {
         return -EIO;
     }
 
-    data->chan.temp  = (r_buff[0] << 8) | r_buff[1];
-    data->chan.humid = (r_buff[3] << 8) | r_buff[4];
-
     crc = crc8(data->crc_table, &r_buff[0], SHT4X_WORD_LEN, SHT4X_CRC8_INIT);
     if (crc != r_buff[2]) {
         dev_err(dev, "data integrity check failure.\n");
@@ -126,6 +123,9 @@ static int sht4x_read_all(struct sht4x_data *data) {
         dev_err(dev, "data integrity check failure.\n");
         return -EIO;
     }
+
+    data->chan.temp  = (r_buff[0] << 8) | r_buff[1];
+    data->chan.humid = (r_buff[3] << 8) | r_buff[4];
 
     /**
      * TBD
