@@ -3,24 +3,45 @@
 / {
 	compatible = "brcm,bcm2712";
 	fragment@0 {
-		target = <&i2c0>;
+		target = <&hab_adc1>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			channel@0 {
+				reg = <4>;
+				ti,gain = <0>;
+				ti,datarate = <4>;
+			};
+			channel@1 {
+				reg = <5>;
+				ti,gain = <0>;
+				ti,datarate = <4>;
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&i2c1>;
 		__overlay__ {
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			adc@49 {
-				compatible = "ti,ads1015";
-				reg = <0x49>;
+			hab_adc1: ads1115@48 {
+				compatible = "ti,ads1115";
+				reg = <0x48>;
+				status = "okay";
+
 				#address-cells = <1>;
 				#size-cells = <0>;
-				channel@0 {
-					reg = <0>;
-				};
-				channel@2 {
-					reg = <2>;
-					ti,gain = <3>;
-					ti,datarate = <5>;
-				};
+			};
+
+			hab_adc2: ads1115@49 {
+				compatible = "ti,ads1115";
+				reg = <0x49>;
+				status = "okay";
+
+				#address-cells = <1>;
+				#size-cells = <0>;
 			};
 		};
 	};
