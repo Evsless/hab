@@ -1,0 +1,27 @@
+/dts-v1/;
+/plugin/;
+/ {
+	compatible = "brcm,bcm2712";
+	fragment@0 {
+		target-path = "/";
+		__overlay__ {
+			i2c_gpio: i2c@2 {
+				compatible = "i2c-gpio";
+				reg = <0x02>;
+				sda-gpios = <&rp1_gpio 23 0>;
+				scl-gpios = <&rp1_gpio 24 0>;
+
+				i2c-gpio,delay-us = <2>;
+				status = "okay";
+
+				mlx_temp@5a {
+					compatible = "melexis,mlx90614";
+
+					reg = <0x5a>;
+					wakeup-gpios = <&rp1_gpio 23 0>;
+					status = "okay";
+				};
+			};
+		};
+	};
+};
