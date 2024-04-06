@@ -5,6 +5,7 @@
 #include <linux/module.h>
 
 #include <linux/iio/iio.h>
+#include <linux/iio/trigger.h>
 #include <linux/iio/triggered_buffer.h>
 #include <linux/iio/trigger_consumer.h>
 
@@ -22,9 +23,11 @@ struct icm20x_fields {
 struct icm20x_data {
     struct  mutex lock;
     struct  i2c_client *client;
+    struct  iio_trigger *trig;
 
     struct  icm20x_fields sshot_data;
     u16     fifo[2048];
+    int     irq;
 };
 
 /***********************************************************************************************************************
@@ -32,20 +35,22 @@ struct icm20x_data {
 ***********************************************************************************************************************/
 static int icm20x_write_reg(const struct i2c_client *client, u8 *buf, u32 size);
 static int icm20x_read_reg(const struct i2c_client *client, u8 *buf, u32 size, const u8 reg);
+static int icm20x_clear_bit_reg(const struct i2c_client *client, const u8 reg_bank, const u8 reg, const u8 bit);
 
 static int icm20x_reset(struct icm20x_data *data);
 static int icm20x_fifo_reset(const struct icm20x_data *data);
 static int icm20x_init(struct icm20x_data *data);
 static int icm20x_read_accel_sshot(struct icm20x_data *data);
-
+static void icm20x_arrange_axis_data(u16 *sample, const unsigned long *scan_channels);
 
 static int icm20x_probe(struct i2c_client *client);
 static int icm20x_read_raw(struct iio_dev *indio_dev, struct iio_chan_spec const *chan, 
                                 int *val, int *val2, long mask);
+static irqreturn_t icm20x_trigger_handler(int irq, void *p);
 
 static int icm20x_buffer_postenable(struct iio_dev *indio_dev);
+static int icm20x_buffer_postdisable(struct iio_dev *indio_dev);
 
-static void icm20x_arrange_axis_data(u16 *sample, const unsigned long *scan_channels);
 /***********************************************************************************************************************
 * GLOBAL DATA DECLARATION                                                                                               
 ***********************************************************************************************************************/
@@ -53,6 +58,7 @@ static void icm20x_arrange_axis_data(u16 *sample, const unsigned long *scan_chan
 static struct icm20x_reg_ops reg_ops = {
     .read_reg = icm20x_read_reg,
     .write_reg = icm20x_write_reg,
+    .clear_bit_reg = icm20x_clear_bit_reg,
 };
 
 static const struct iio_chan_spec icm20x_channels[] = {
@@ -115,6 +121,7 @@ static const struct iio_info icm20x_info = {
 
 static const struct iio_buffer_setup_ops icm20x_buffer_ops = {
     .postenable = icm20x_buffer_postenable,
+    .postdisable = icm20x_buffer_postdisable,
 };
 
 static struct i2c_driver icm20x_driver = {
@@ -231,6 +238,30 @@ static int icm20x_read_reg(const struct i2c_client *client, u8 *buf, u32 size, c
     return ret;
 }
 
+static int icm20x_clear_bit_reg(const struct i2c_client *client, const u8 reg_bank, const u8 reg, const u8 bit) {
+    int ret;
+    u8 reg_val;
+    u8 buffer[2];
+
+    buffer[0] = ICM20X_REG_BANK_SEL;
+    buffer[1] = reg_bank;
+    ret = icm20x_write_reg(client, buffer, sizeof(buffer));
+    if (ret)
+        return ret;
+
+    ret = icm20x_read_reg(client, &reg_val, sizeof(reg_val), reg);
+    if (ret)
+        return ret;
+
+    buffer[0] = reg;
+    buffer[1] = reg_val & (~bit);
+    ret = icm20x_write_reg(client, buffer, sizeof(buffer));
+    if (ret)
+            return ret;
+
+    return 0;
+}
+
 static int icm20x_reset(struct icm20x_data *data) {
     int ret;
     u8 buffer[2];
@@ -249,7 +280,6 @@ static int icm20x_reset(struct icm20x_data *data) {
 
     usleep_range(20000, 30000);
 
-    printk(KERN_INFO "Reset completed\n");
     return 0;
 }
 
@@ -337,40 +367,82 @@ static int icm20x_buffer_postenable(struct iio_dev *indio_dev) {
     buffer[1] = ICM20X_MASK_SEL_UB_0;
     ret = reg_ops.write_reg(data->client, buffer, sizeof(buffer));
     if (ret)
-        return ret;
+        goto release;
 
     /**
      * FIFO buffer setup.
      * 1) Enable FIFO;
      * 2) Write accel to FIFO;
      * 3) Setup FIFO mode;
-     *
+     * 4) Enable FIFO overflow irq.
     */
     buffer[0] = ICM20X_REG_USER_CTRL;
     buffer[1] = ICM20X_MASK_USER_CTRL_FIFO_EN;
     ret = reg_ops.write_reg(data->client, buffer, sizeof(buffer));
     if (ret)
-        return ret;
+        goto release;
 
     buffer[0] = ICM20X_REG_FIFO_EN_2;
     buffer[1] = ICM20X_MASK_FIFO_EN_2_ACCEL_FIFO_EN;
     ret = reg_ops.write_reg(data->client, buffer, sizeof(buffer));
     if (ret)
-        return ret;
+        goto release;
 
     buffer[0] = ICM20X_REG_FIFO_MODE;
     buffer[1] = ICM20X_MASK_FIFO_MODE_SNAPSHOT;
     ret = reg_ops.write_reg(data->client, buffer, sizeof(buffer));
     if (ret)
-        return ret;
+        goto release;
+    
+    if (data->irq > 0) {
+        buffer[0] = ICM20X_REG_INT_ENABLE_2;
+        buffer[1] = ICM20X_MASK_INT_ENABLE_2_FIFO_OVERFLOW_EN;
+        ret = reg_ops.write_reg(data->client, buffer, sizeof(buffer));
+        if (ret)
+            goto release;
+    }
 
     ret = icm20x_fifo_reset(data);
-    if (ret)
-        return ret;
 
+release:
     mutex_unlock(&data->lock);
     
-    return 0;
+    return ret;
+}
+
+static int icm20x_buffer_postdisable(struct iio_dev *indio_dev) {
+    int ret;
+    struct icm20x_data *data = iio_priv(indio_dev);
+
+    mutex_lock(&data->lock);
+
+    /**
+     * FIFO buffer disable
+     * 1) Read the USER_CTRL and disable the FIFO_EN bit;
+     * 2) Read the FIFO_EN_2 and disable the ACCEL readout;
+     * 3) Read the INT_ENABLE_2 and disable the OVERFLOW_EN bit (if IRQ support enabled).
+     */
+
+    ret = reg_ops.clear_bit_reg(data->client, ICM20X_MASK_SEL_UB_0, 
+                                    ICM20X_REG_USER_CTRL, ICM20X_MASK_USER_CTRL_FIFO_EN);
+    if (ret)
+        goto release;
+
+    ret = reg_ops.clear_bit_reg(data->client, ICM20X_MASK_SEL_UB_0, 
+                                    ICM20X_REG_FIFO_EN_2, ICM20X_MASK_FIFO_EN_2_ACCEL_FIFO_EN);
+    if (ret)
+        goto release;
+
+    if (data->irq > 0) {
+        ret = reg_ops.clear_bit_reg(data->client, ICM20X_MASK_SEL_UB_0,
+                                        ICM20X_REG_INT_ENABLE_2, ICM20X_MASK_INT_ENABLE_2_FIFO_OVERFLOW_EN);
+        if (ret)
+            goto release;
+    }
+
+release:
+    mutex_unlock(&data->lock);
+    return ret;
 }
 
 static int icm20x_read_accel_sshot(struct icm20x_data *data) {
@@ -391,9 +463,6 @@ static int icm20x_read_accel_sshot(struct icm20x_data *data) {
     data->sshot_data.acc_y = (buffer[2] << 8) | buffer[3];
     data->sshot_data.acc_z = (buffer[4] << 8) | buffer[5];
 
-    printk(KERN_INFO "--RAW READOUT--\n");
-    for (u8 i = 0; i < 6; i++)
-        printk(KERN_INFO "%u) %u\n", i, buffer[i]);
     return 0;
 }
 
@@ -439,23 +508,22 @@ static int icm20x_probe(struct i2c_client *client) {
     struct device *dev = &client->dev;
 
     if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_READ_BYTE))
-        dev_err_probe(dev, -EOPNOTSUPP, "i2c is not supported.\n");
+        return dev_err_probe(dev, -EOPNOTSUPP, "i2c is not supported.\n");
 
     indio_dev = devm_iio_device_alloc(dev, sizeof(*data));
     if (!indio_dev)
-        dev_err_probe(dev, -ENOMEM, "could not create iio device.\n");
+        return dev_err_probe(dev, -ENOMEM, "could not create iio device.\n");
 
     data = iio_priv(indio_dev);
     
     data->client = client;
+    data->irq    = client->irq;
     mutex_init(&data->lock);
     
     indio_dev->name = "icm20x";
     indio_dev->info = &icm20x_info;
     indio_dev->channels = icm20x_channels;
     indio_dev->num_channels = ARRAY_SIZE(icm20x_channels);
-    
-    /* WARNING: That field might be modified for kfifo. */
     indio_dev->modes = INDIO_DIRECT_MODE | INDIO_BUFFER_SOFTWARE;
 
     mutex_lock(&data->lock);
@@ -468,6 +536,23 @@ static int icm20x_probe(struct i2c_client *client) {
 
     if (ret)
         return ret;
+    
+    /* HAB Default use case - buffer trigger is INT pin */
+    if (data->irq > 0) {
+        data->trig = devm_iio_trigger_alloc(dev, "irqtrig-%d", data->irq);
+        if (!data->trig)
+            return dev_err_probe(dev, -ENOMEM, "trigger allocation failed\n");
+        
+        iio_trigger_set_drvdata(data->trig, data);
+        ret = devm_request_irq(dev, data->irq, &iio_trigger_generic_data_rdy_poll, 
+                                    IRQF_SHARED | IRQF_ONESHOT | IRQF_TRIGGER_RISING, indio_dev->name, data->trig);
+        if (ret)
+            return ret;
+
+        ret = devm_iio_trigger_register(dev, data->trig);
+        if (ret)
+            return ret;
+    }
     
     ret = devm_iio_triggered_buffer_setup_ext(dev, 
                                               indio_dev, NULL, 

@@ -4,6 +4,7 @@
 struct icm20x_reg_ops {
     int (*read_reg)(const struct i2c_client *client, u8 *buf, u32 size, const u8 reg);
     int (*write_reg)(const struct i2c_client *client, u8 *buf, u32 size);
+    int (*clear_bit_reg)(const struct i2c_client *client, const u8 reg_bank, const u8 reg, const u8 bit);
 };
 
 /**************************************************

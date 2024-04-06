@@ -3,6 +3,17 @@
 / {
 	compatible = "brcm,bcm2712";
 	fragment@0 {
+		target = <&rp1_gpio>;
+		__overlay__ {
+			icm_ovf_6: icm_ovf_6 {
+				function = "gpio";
+				pins = "gpio6";
+				bias-pull-up;
+			};
+		};
+	};
+
+	fragment@1 {
 		target = <&i2c0>;
 		__overlay__ {
 			#address-cells = <1>;
@@ -10,8 +21,14 @@
 
 			icm_accel@69 {
 				compatible = "invensense,icm20x";
-
 				reg = <0x69>;
+
+				pinctrl-names = "default";
+				pinctrl-0 = <&icm_ovf_6>;
+
+				interrupt-parent = <&rp1_gpio>;
+				interrupts = <6 1>;
+
 				status = "okay";
 			};
 		};

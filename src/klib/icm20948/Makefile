@@ -4,6 +4,7 @@ DT_OVERLAYS_LIST := icm20x.dtbo
 # ccflags-y := -I.
 
 DEVICE_0 := /sys/bus/iio/devices/iio\:device0
+IIO_BUFFER_LEN := 2048
 
 all: kmod $(DT_OVERLAYS_LIST)
 	@echo "Kernel module & device tree overlay build.\n"
@@ -38,11 +39,12 @@ setup_buffer:
 	@echo 1 > $(DEVICE_0)/scan_elements/in_accel_x_en
 	@echo 1 > $(DEVICE_0)/scan_elements/in_accel_y_en
 	@echo 1 > $(DEVICE_0)/scan_elements/in_accel_z_en
-	@echo 2048 > $(DEVICE_0)/buffer/length
+	@echo $(IIO_BUFFER_LEN) > $(DEVICE_0)/buffer/length
 	@echo 1 > $(DEVICE_0)/buffer/enable
 
 buffer_disable:
 	@echo 0 > $(DEVICE_0)/buffer/enable
+	@echo > $(DEVICE_0)/trigger/current_trigger
 
 PHONIES += dtoverlay_load reload_module setup_buffer
 
