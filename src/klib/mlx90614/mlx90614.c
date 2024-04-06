@@ -163,11 +163,10 @@ static int mlx90614_probe(struct i2c_client *client) {
     data->client = client;
     mutex_init(&data->lock);
     
-    /* TBD: Simplify error checking here. */
-    data->wakeup_gpio = devm_gpiod_get_optional(&client->dev, "wakeup", GPIOD_IN | GPIOD_FLAGS_BIT_NONEXCLUSIVE);
+    data->wakeup_gpio = devm_gpiod_get_optional(&client->dev, "wakeup", GPIOD_IN);
     if (IS_ERR(data->wakeup_gpio))
         return dev_err_probe(&client->dev, PTR_ERR(data->wakeup_gpio), "error acquiring given gpio");
-    if (!data->wakeup_gpio)
+    else if (!data->wakeup_gpio)
         return dev_err_probe(&client->dev, -EOPNOTSUPP, "given gpio was not found");
 
     indio_dev->name         = "mlx90614";
