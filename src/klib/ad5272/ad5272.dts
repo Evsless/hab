@@ -1,0 +1,30 @@
+/dts-v1/;
+/plugin/;
+/ {
+	compatible = "brcm,bcm2712";
+	fragment@0 {
+		target = <&i2c1>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			hab_potentiometer1: ad5272@2c {
+				compatible = "adi,ad5272-050";
+				reg = <0x2c>;
+				status = "okay";
+			};
+
+			hab_potentiometer2: ads1115@2e {
+				compatible = "adi,ad5272-050";
+				reg = <0x2e>;
+				status = "okay";
+			};
+
+            hab_potentiometer3: ads1115@2f {
+				compatible = "adi,ad5272-050";
+				reg = <0x2f>;
+				status = "okay";
+			};
+		};
+	};
+};
