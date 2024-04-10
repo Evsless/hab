@@ -333,9 +333,11 @@ static int mprls_probe(struct i2c_client *client) {
     ret = devm_iio_triggered_buffer_setup(dev, indio_dev, NULL, mprls_trigger_handler,NULL);
     if (ret)
         return dev_err_probe(dev, ret, "iio triggered buffer setup failed\n");
+    
+    ret = iio_device_set_clock(indio_dev, CLOCK_BOOTTIME);
 
-     ret = devm_iio_device_register(dev, indio_dev);
-     if (ret)
+    ret = devm_iio_device_register(dev, indio_dev);
+    if (ret)
         return dev_err_probe(dev, ret, "Unable to register a device.\n");
 
     return 0;
