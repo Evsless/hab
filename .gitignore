@@ -8,3 +8,5 @@
 *.symvers
 *.order
 *.mod*
+
+*hab_master
