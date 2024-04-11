@@ -18,7 +18,7 @@
 					compatible = "melexis,mlx90614";
 
 					reg = <0x5a>;
-					wakeup-gpios = <&rp1_gpio 14 0>;
+					wakeup-gpios = <&rp1_gpio 22 0>;
 					status = "okay";
 				};
 			};

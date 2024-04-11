@@ -5,9 +5,9 @@
 	fragment@0 {
 		target = <&rp1_gpio>;
 		__overlay__ {
-			icm_ovf_6: icm_ovf_6 {
+			icm_ovf_13: icm_ovf_13 {
 				function = "gpio";
-				pins = "gpio6";
+				pins = "gpio13";
 				bias-pull-up;
 			};
 		};
@@ -24,10 +24,10 @@
 				reg = <0x69>;
 
 				pinctrl-names = "default";
-				pinctrl-0 = <&icm_ovf_6>;
+				pinctrl-0 = <&icm_ovf_13>;
 
 				interrupt-parent = <&rp1_gpio>;
-				interrupts = <6 1>;
+				interrupts = <13 1>;
 
 				status = "okay";
 			};
