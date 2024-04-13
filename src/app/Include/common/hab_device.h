@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "stdtypes.h"
+#include "hab_trig.h"
 #include "iio_buffer_types.h"
 
 typedef struct {
@@ -12,6 +13,7 @@ typedef struct {
     const char *buff_path;
     const char *log_path;
     iiobuff_format_t buff_format;
+    habtrig_t *trig;
 } habdev_t;
 
 

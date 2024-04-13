@@ -15,6 +15,10 @@ typedef int16_t     s16;
 typedef int32_t     s32;
 typedef int64_t     s64;
 
+#define MILLI 1000LU
+#define MICRO 1000000LU
+#define NANO  1000000000LU
+
 typedef enum {
     STD_OK,
     STD_NOT_OK,

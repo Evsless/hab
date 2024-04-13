@@ -1,0 +1,16 @@
+KMOD_MPRLS0025 := mprls0025
+KMOD_ICM20948  := icm20x
+KMOD_SHT40     := sht4x
+KMOD_ADS1115   := ads1115
+KMOD_AD5272    := ad5272
+KMOD_MLX90614  := mlx90614
+
+HAB_KMOD_LIST ?=
+ifeq ($(HAB_KMOD_LIST),$(EMPTY))
+HAB_KMOD_LIST += $(KMOD_MPRLS0025) 		\
+					$(KMOD_ICM20948) 	\
+					$(KMOD_SHT40) 		\
+					$(KMOD_ADS1115) 	\
+					$(KMOD_AD5272) 		\
+					$(KMOD_MLX90614)
+endif
