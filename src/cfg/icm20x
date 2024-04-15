@@ -1,0 +1,5 @@
+c in_accel_x_en
+c in_accel_y_en
+c in_accel_z_en
+b length 512
+b enable

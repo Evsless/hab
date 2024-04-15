@@ -4,8 +4,18 @@
 #include <stdio.h>
 #include "stdtypes.h"
 
+#define CROP_NEWLINE(str, len) { \
+    if ('\n' == str[len - 1])    \
+        str[len - 1] = 0;        \
+}
+
+#define CROP_LAST_CHAR(str, len) { \
+    str[len - 1] = 0;              \
+}
+
 void to_char(int num, char *str);
 void str_reverse(char *str, int len);
+int str_compare(const char *s1, const char *s2);
 
 int get_word(const char *str, usize *pos, char *word, usize size);
 int get_line(const char *filepath, usize *foffset, char *buff, usize size);

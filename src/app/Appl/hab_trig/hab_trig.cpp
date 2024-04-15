@@ -103,6 +103,7 @@ stdret_t habtrig_register(habtrig_t *trig, u32 period_ms) {
 
     if (mkdir_ret >= 0) {
         trig->period_ms = period_ms;
+        trig->type = T_HRTIM;
         strcpy(trig->name, trig_name);
 
         ret = write_period(trig, period_ms);

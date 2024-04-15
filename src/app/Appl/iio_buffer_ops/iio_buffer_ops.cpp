@@ -39,6 +39,8 @@
 # error "ERROR: Path to buffer configuration folder is not specified."
 #endif
 
+#define IRQ_LIST_PATH      "/proc/interrupts"
+#define IRQ_TRIG_BASENAME  "irqtrig-"
 
 #define HEXDUMP_RECORD_LEN 0x10
 #define BUFF_LEN_SUBPATH   "buffer/data_available"
@@ -75,6 +77,8 @@ static stdret_t hexdump_to_file(void *buffer, const int size, const habdev_t *ha
 
 static cfgtoken_t parse_cfg(const char *cfg);
 static stdret_t write_cfg(const habdev_t *habdev, const cfgtoken_t *cfg);
+
+static stdret_t find_irq_trigger(habdev_t *habdev);
 
 /**********************************************************************************************************************
  * LOCAL FUNCTION DEFINITION
@@ -138,6 +142,57 @@ static void flip_nibbles(char *buffer, usize size) {
     }
 }
 
+static stdret_t find_irq_trigger(habdev_t *habdev) {
+    stdret_t ret;
+    char line[128] = {0};
+    char word[64]  = {0};
+    char dev_name[32] = {0};
+    char first_word[32] = {0};
+
+    usize fpos = 0;
+    usize lpos = 0;
+
+    bool repeat = true;
+    bool line_begin = true;
+
+    /* Read device name. Same name is used in /proc/interrupts list. */
+    ret = create_path(line, 2, habdev->dev_path, "/name");
+    ret = read_file(line, dev_name, sizeof(dev_name));
+    CROP_NEWLINE(dev_name, strlen(dev_name));
+
+    while(get_line(IRQ_LIST_PATH, &fpos, line, sizeof(line)) >= 0 && repeat) {
+        while(get_word(line, &lpos, word, sizeof(word)) >= 0 && repeat) {
+            if (line_begin) {
+                line_begin = false;
+                strcpy(first_word, word);
+            }
+
+            if (0 == str_compare(dev_name, word)) {
+                repeat = false;
+            }
+        }
+        lpos = 0;
+        line_begin = true;
+    }
+
+    /* If while loop was interrupted - device entry found. */
+    if (!repeat) {
+        CROP_LAST_CHAR(first_word, strlen(first_word));
+        ret = create_path(habdev->trig->name, 2, IRQ_TRIG_BASENAME, first_word);
+        habdev->trig->type = T_IRQ;
+    
+        ret = STD_OK;
+    } else {
+        ret = STD_NOT_OK;
+    }
+    return ret;
+}
+
+/**
+ * INFO
+ * Below functions will be probably rewritten.
+ *
+ */
 static stdret_t get_buff_size(const char *devpath, int *size) {
     FILE *filp          = NULL;
     stdret_t ret        = STD_NOT_OK;
@@ -201,6 +256,12 @@ stdret_t iiobuff_setup(habdev_t *habdev) {
     stdret_t ret = STD_NOT_OK;
     usize cfg_pos = 0;
     cfgtoken_t token;
+
+    if (T_HRTIM != habdev->trig->type) {
+        ret = find_irq_trigger(habdev);
+        if (STD_OK == ret)
+            fprintf(stdout, "INFO: irq-trigger %s for device found.\n", habdev->trig->name);
+    }
 
     char filepath_buff[128] = {0};
     char append_buff[64] = {0};

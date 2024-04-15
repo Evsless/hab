@@ -35,12 +35,6 @@
  *********************************************************************************************************************/
 #define MAX_SUBSTR_SIZE 1024
 
-#define CROP_NEWLINE(str, len) { \
-    if ('\n' == str[len - 1])    \
-        str[len - 1] = 0;        \
-}
-
-
 /**********************************************************************************************************************
  * GLOBAL VARIABLES DECLARATION
  *********************************************************************************************************************/
@@ -68,6 +62,15 @@ void str_reverse(char *str, int len) {
         str[begin++] = str[end];
         str[end--] = tmp;
     }
+}
+
+int str_compare(const char *s1, const char *s2) {
+    while (*s1 == *s2++)
+        if (*s1++ == '\0') {
+            return (0);
+        }
+
+    return (*(const unsigned char *)s1 - *(const unsigned char *)(s2 - 1));
 }
 
 void to_char(int num, char *str) {
