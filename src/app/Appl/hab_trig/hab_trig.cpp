@@ -31,6 +31,7 @@
 #include <sys/stat.h>
 
 #include "hab_trig.h"
+#include "utils.h"
 
 /**********************************************************************************************************************
  *  PREPROCESSOR DEFINITIONS
@@ -50,37 +51,11 @@ static int       habtrig_cnt;
 /**********************************************************************************************************************
  * LOCAL FUNCTION DECLARATION
  *********************************************************************************************************************/
-static void to_char(int num, char *str);
-static void str_reverse(char *str, int len);
 static stdret_t write_period(const habtrig_t *trig, u32 period_ms);
 
 /**********************************************************************************************************************
  * LOCAL FUNCTION DEFINITION
  *********************************************************************************************************************/
-static void str_reverse(char *str, int len) {
-    int begin = 0;
-    int end = len - 1;
-    char tmp;
-    
-    while (end > begin) {
-        tmp = str[begin];
-
-        str[begin++] = str[end];
-        str[end--] = tmp;
-    }
-}
-
-static void to_char(int num, char *str) {
-    int len = 0;
-    
-    while(num) {
-        str[len++] = (num % 10) + '0';
-        num /= 10;
-    }
-
-    str_reverse(str, len);
-}
-
 static stdret_t write_period(const habtrig_t *trig, u32 period_ms) {
     stdret_t ret = STD_NOT_OK;
     FILE *filp = NULL;

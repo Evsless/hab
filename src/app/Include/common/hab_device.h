@@ -9,15 +9,17 @@
 #include "iio_buffer_types.h"
 
 typedef struct {
-    const char *dev_path;
-    const char *buff_path;
-    const char *log_path;
+    u8 id;
+    char dev_path[64];
+    char buff_path[32];
+    char log_path[64];
     iiobuff_format_t buff_format;
     habtrig_t *trig;
 } habdev_t;
 
 
-habdev_t *habdev_init(void);
+habdev_t *habdev_alloc(void);
+stdret_t habdev_register(habdev_t *dev, u32 idx);
 void habdev_free(habdev_t *dev);
 
 

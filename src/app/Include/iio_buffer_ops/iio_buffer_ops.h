@@ -46,6 +46,7 @@
 /**********************************************************************************************************************
  * GLOBAL FUNCTION DECLARATION
  *********************************************************************************************************************/
+stdret_t iiobuff_setup(habdev_t *habdev);
 stdret_t iiobuff_log2file(char *ubuff, const habdev_t *habdev);
 
 #endif /* __IIO_BUFFER_OPS_H__ */

@@ -7,11 +7,9 @@
 #include "hab_trig.h"
 
 #define IIO_BUFF_SIZE       1024
-#define MPRLS0025_BUFF_PATH "/dev/iio:device0"
-#define MPRLS0025_DEV_PATH  "/sys/bus/iio/devices/iio:device0/"
-#define MPRLS0025_LOG_PATH  "/media/hab_flight_data/mprls0025.log"
 
 #define BUFF_DATA_AVAIL "buffer/data_available"
+
 
 char iio_buffer[IIO_BUFF_SIZE];
 
@@ -26,17 +24,17 @@ int main(void) {
     habtrig_t *habtrig = habtrig_alloc();
     ret = habtrig_register(habtrig, 500);
 
-    habdev_t *mprls_dev    = habdev_init();
-
-    mprls_dev->dev_path    = MPRLS0025_DEV_PATH;
-    mprls_dev->buff_path   = MPRLS0025_BUFF_PATH;
-    mprls_dev->log_path    = MPRLS0025_LOG_PATH;
-    mprls_dev->buff_format = mprls_iiobuff;
+    habdev_t *mprls_dev    = habdev_alloc();
     mprls_dev->trig        = habtrig;
+    mprls_dev->buff_format = mprls_iiobuff;
 
-    ret = iiobuff_log2file(iio_buffer, mprls_dev);
+    ret = habdev_register(mprls_dev, IIO_KMOD_IDX_MPRLS0025);
+    ret = iiobuff_setup(mprls_dev);
+
     
-    // habtrig_free(habtrig);
+    // ret = iiobuff_log2file(iio_buffer, mprls_dev);
+    
+    habtrig_free(habtrig);
     habdev_free(mprls_dev);
     return 0;
 }

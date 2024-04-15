@@ -1,6 +1,7 @@
 #ifndef __STDTYPES_H__
 #define __STDTYPES_H__
 
+#include <stddef.h>
 #include <stdint.h>
 
 typedef size_t      usize;
