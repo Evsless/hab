@@ -64,3 +64,5 @@ TRIG_ARRAY 			= $(call create_array,$(subst _,$(EMPTY),$(TRIG_LIST)))
 
 _TRIG_LUT_RAW 		= $(foreach elem,$(HABDEV_LIST),$(call get_arr_idx,$($(elem)_TRIG),$(TRIG_LIST)))
 TRIG_LUT_ARRAY 		= $(call create_array,$(_TRIG_LUT_RAW))
+
+HABDEV_MACRO_LIST = $(foreach habmod,$(HABDEV_LIST),$(call define-dev-macro-name,$(habmod)))
