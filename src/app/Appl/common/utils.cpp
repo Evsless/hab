@@ -33,12 +33,15 @@
 /**********************************************************************************************************************
  *  PREPROCESSOR DEFINITIONS
  *********************************************************************************************************************/
-#define MAX_SUBSTR_SIZE 1024
+#define HEXDUMP_RECORD_LEN 0x10U
 
 /**********************************************************************************************************************
  * GLOBAL VARIABLES DECLARATION
  *********************************************************************************************************************/
 extern int errno;
+static const char *file_modes[MOD_NO] = {
+    "r", "w", "a", "r+", "a+", "w+"
+};
 
  /**********************************************************************************************************************
  * LOCAL FUNCTION DECLARATION
@@ -138,11 +141,38 @@ int get_line(const char *filepath, usize *foffset, char *buff, usize size) {
     return ret;
 }
 
-stdret_t read_file(const char *filepath, char *buff, usize size) {
+stdret_t hexdump(const char *filepath, const char *buff, usize size) {
+    stdret_t ret = STD_NOT_OK;
+    u8 byte = 0;
+    FILE *filp = NULL;
+
+    filp = fopen(filepath, file_modes[MOD_A]);
+    if (NULL == filp) {
+        fprintf(stderr, "ERROR: Error opening the file: %s\n", filepath);
+        return ret;
+    }
+
+    for (usize i = 0; i < size; i++) {
+        for (usize j = 0; j < HEXDUMP_RECORD_LEN; j++) {
+            byte = buff[j + i * HEXDUMP_RECORD_LEN];
+    
+            fprintf(filp, "%02x", byte);
+            if (j % 2 != 0)
+                fprintf(filp, " ");
+        }
+        fprintf(filp, "\n");
+    }
+    fclose(filp);
+
+    ret = STD_OK;
+    return ret;
+}
+
+stdret_t read_file(const char *filepath, char *buff, usize size, file_mode_t fmod) {
     stdret_t ret = STD_NOT_OK;
     FILE *filp = NULL;
 
-    filp = fopen(filepath, "r");
+    filp = fopen(filepath, file_modes[fmod]);
     if (NULL == filp) {
         fprintf(stderr, "ERROR: Could not open the file - %s\n", filepath);
         printf("errno %d\n", errno);
@@ -155,12 +185,13 @@ stdret_t read_file(const char *filepath, char *buff, usize size) {
     return ret;
 }
 
-stdret_t write_file(const char *filepath, const char *buff, usize size) {
+/* OPTIONAL: Add a conditinal check whether the mode allows to write or not. */
+stdret_t write_file(const char *filepath, const char *buff, usize size, file_mode_t fmod) {
     stdret_t ret = STD_NOT_OK;
     int bytes_written = 0;
     FILE *filp = NULL;
 
-    filp = fopen(filepath, "w");
+    filp = fopen(filepath, file_modes[fmod]);
     if (NULL == filp) {
         fprintf(stderr, "ERROR: Could not open the file for writing - %s\n", filepath);
     } else {

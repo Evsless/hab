@@ -55,11 +55,16 @@ uv_timer_t mprls_tim;
  * LOCAL FUNCTION DEFINITION
  *********************************************************************************************************************/
 void my_read(uv_timer_t *handle) {
-    printf("Timer triggered\n");
+    habdev_t *dev = (habdev_t *)handle->data;
+    printf("Timer triggered %s\n", dev->dev_path);
+    iiobuff_log2file(dev);
 }
 
 int mprls_task(int index) {
     loop = uv_default_loop();
+
+    habdev_t *dev = habdev_get(index);
+    mprls_tim.data = dev;
 
     uv_timer_init(loop, &mprls_tim);
     uv_timer_start(&mprls_tim, my_read, 0, 4000);

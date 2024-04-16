@@ -41,7 +41,7 @@ stdret_t habdev_register(habdev_t *habdev, u32 idx) {
 
     /* Read the device driver name (that is, the module name) */
     ret = create_path(path_buff, 2, habdev->dev_path, "/name");
-    ret = read_file(path_buff, dev_name, sizeof(dev_name));
+    ret = read_file(path_buff, dev_name, sizeof(dev_name), MOD_R);
 
     if (STD_OK == ret)
         ret = create_path(habdev->log_path, 2, HAB_DATASTORAGE_PATH, dev_name);

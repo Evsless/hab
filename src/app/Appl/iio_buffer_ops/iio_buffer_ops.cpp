@@ -43,7 +43,7 @@
 #define IRQ_TRIG_BASENAME  "irqtrig-"
 
 #define HEXDUMP_RECORD_LEN 0x10
-#define BUFF_LEN_SUBPATH   "buffer/data_available"
+#define BUFF_LEN_SUBPATH   "/buffer/data_available"
 
 #define BUFF_CFG_SCAN_ELEM "scan_elements/"
 #define BUFF_CFG_LEN       "buffer/length"
@@ -66,7 +66,7 @@ typedef struct {
 /**********************************************************************************************************************
  * GLOBAL VARIABLES DECLARATION
  *********************************************************************************************************************/
-
+static char data_buffer[4096];
 
 /**********************************************************************************************************************
  * LOCAL FUNCTION DECLARATION
@@ -128,7 +128,7 @@ static stdret_t write_cfg(const habdev_t *habdev, const cfgtoken_t *cfg) {
 
     ret = create_path(setting_path, 3, habdev->dev_path, setting_group, cfg->setting);
     to_char(cfg->val, wr_buff);
-    ret = write_file(setting_path, wr_buff, sizeof(wr_buff));
+    ret = write_file(setting_path, wr_buff, sizeof(wr_buff), MOD_W);
 
     return ret;
 }
@@ -157,7 +157,7 @@ static stdret_t find_irq_trigger(habdev_t *habdev) {
 
     /* Read device name. Same name is used in /proc/interrupts list. */
     ret = create_path(line, 2, habdev->dev_path, "/name");
-    ret = read_file(line, dev_name, sizeof(dev_name));
+    ret = read_file(line, dev_name, sizeof(dev_name), MOD_R);
     CROP_NEWLINE(dev_name, strlen(dev_name));
 
     while(get_line(IRQ_LIST_PATH, &fpos, line, sizeof(line)) >= 0 && repeat) {
@@ -188,66 +188,6 @@ static stdret_t find_irq_trigger(habdev_t *habdev) {
     return ret;
 }
 
-/**
- * INFO
- * Below functions will be probably rewritten.
- *
- */
-static stdret_t get_buff_size(const char *devpath, int *size) {
-    FILE *filp          = NULL;
-    stdret_t ret        = STD_NOT_OK;
-    char filepath[64]   = {0};
-
-    /* The buffer size is way too big for now. Consider changing its length */
-    char buffer[64]     = {0};
-
-    /* Set up the filename by concatenating device name with subpath. */
-    strcpy(filepath, devpath);
-    strcat(filepath, BUFF_LEN_SUBPATH);
-
-    filp = fopen(filepath, "r");
-    if (NULL == filp) {
-        fprintf(stderr, "ERROR: Error opening the file: %s\n", filepath);
-        return ret;
-    }
-
-    fread(buffer, sizeof(char), sizeof(buffer), filp);
-    fclose(filp);
-
-    *size = atoi(buffer);
-
-    ret = STD_OK;
-    return ret;
-}
-
-static stdret_t hexdump_to_file(void *buffer, const int size, const habdev_t *habdev) {
-    stdret_t ret = STD_NOT_OK;
-    u8 byte = 0;
-    u8 *data = (u8 *) buffer;
-    FILE *filp = NULL;
-
-    filp = fopen(habdev->log_path, "a+");
-    if (NULL == filp) {
-        fprintf(stderr, "ERROR: Error opening the file: %s\n", habdev->log_path);
-        return ret;
-    }
-
-    for (usize i = 0; i < size; i++) {
-        for (int j = 0; j < HEXDUMP_RECORD_LEN; j++) {
-            byte = data[j + i * HEXDUMP_RECORD_LEN];
-    
-            fprintf(filp, "%02x", byte);
-            if (j % 2 != 0)
-                fprintf(filp, " ");
-        }
-        fprintf(filp, "\n");
-    }
-    fclose(filp);
-
-    ret = STD_OK;
-    return ret;
-}
-
 /**********************************************************************************************************************
  * GLOBAL FUNCTION DEFINITION
  *********************************************************************************************************************/
@@ -268,11 +208,11 @@ stdret_t iiobuff_setup(habdev_t *habdev) {
 
     /* Setting up a trigger for a buffer */
     ret = create_path(filepath_buff, 3, habdev->dev_path, "/trigger", "/current_trigger");
-    ret = write_file(filepath_buff, habdev->trig->name, sizeof(habdev->trig->name));
+    ret = write_file(filepath_buff, habdev->trig->name, sizeof(habdev->trig->name), MOD_W);
 
     /* Reading the device name */
     ret = create_path(filepath_buff, 2, habdev->dev_path, "/name");
-    ret = read_file(filepath_buff, append_buff, sizeof(append_buff));
+    ret = read_file(filepath_buff, append_buff, sizeof(append_buff), MOD_R);
 
     memset(filepath_buff, 0, sizeof(filepath_buff));
     ret = create_path(filepath_buff, 2, HAB_BUFF_CFG_PATH, append_buff);
@@ -285,29 +225,20 @@ stdret_t iiobuff_setup(habdev_t *habdev) {
     return ret;
 }
 
-stdret_t iiobuff_log2file(char *ubuff, const habdev_t *habdev) {
-    FILE *filp = NULL;
+stdret_t iiobuff_log2file(const habdev_t *habdev) {
     stdret_t ret = STD_NOT_OK;
-    const char *filepath = habdev->buff_path;
     int size = 0;
+    char blen[8];
+    char buffer[128];
 
-    ret = get_buff_size(habdev->dev_path, &size);
-    
-    filp = fopen(filepath, "r+");
-    if (NULL == filp) {
-        fprintf(stderr, "ERROR: Could not open the file %s.\n", filepath);
-        return ret;
-    }
+    ret = create_path(buffer, 2, habdev->dev_path, BUFF_LEN_SUBPATH);
+    ret = read_file(buffer, blen, sizeof(buffer), MOD_R);
+    size = atoi(blen);
 
-    fread(ubuff, sizeof(char), size * HEXDUMP_RECORD_LEN, filp);
-    fclose(filp);
+    ret = read_file(habdev->buff_path, data_buffer, size * HEXDUMP_RECORD_LEN, MOD_RW);
+    flip_nibbles(data_buffer, size * HEXDUMP_RECORD_LEN);
 
-    flip_nibbles(ubuff, size * HEXDUMP_RECORD_LEN);
-
-    ret = hexdump_to_file(ubuff, size, habdev);
-    if (STD_NOT_OK == ret) {
-        return ret;
-    }
+    ret = hexdump(habdev->log_path, data_buffer, size);
 
     ret = STD_OK;
     return ret;
