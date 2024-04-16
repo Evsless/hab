@@ -5,48 +5,40 @@
 #include "iio_buffer_ops.h"
 
 #include "hab_trig.h"
+#include "utils.h"
 
-#define IIO_BUFF_SIZE       1024
-
-#define BUFF_DATA_AVAIL "buffer/data_available"
-
-
-char iio_buffer[IIO_BUFF_SIZE];
 
 static const iiobuff_format_t mprls_iiobuff = {
     .storagebits = sizeof(s32),
     .ts_en = true,
 };
 
+
+u8  idx_arr[] = HABDEV_IDX_SET;
+u32 trig_arr[] = TRIG_PERIOD_SET;
+s16 trig_lut[] = TRIG_LUT;
+
 int main(void) {
     stdret_t ret = STD_NOT_OK;
 
-    /* HRTRIG SETUP */
-    habtrig_t *habtrig = habtrig_alloc();
-    ret = habtrig_register(habtrig, 500);
+    habtrig_t *habtrig = NULL;
+    habdev_t *habdev = NULL;
 
-    /* IRQ TRIG SETUP */
-    habtrig_t *icm20x_trig = habtrig_alloc();
+    /* 1. TRIGGER SETUP */
+    for (int i = 0; i < ARRAY_SIZE(trig_arr); i++) {
+        habtrig = habtrig_alloc();
+        habtrig->index = i;
+        if (trig_arr[i] > 0)
+            ret = habtrig_register(habtrig, trig_arr[i]);
+    }
 
-    /* MPRLS DEVICE ALLOC */
-    habdev_t *mprls_dev    = habdev_alloc();
-    mprls_dev->trig        = habtrig;
-    mprls_dev->buff_format = mprls_iiobuff;
+    /* 2. DEVICE ALLOCATION */
+    for (int i = 0; i < ARRAY_SIZE(idx_arr); i++) {
+        habdev = habdev_alloc();
+        habdev->trig = habtrig_get(trig_lut[i]);
+        ret = habdev_register(habdev, idx_arr[i]);
+        ret = iiobuff_setup(habdev);
+    }
 
-    ret = habdev_register(mprls_dev, IIO_KMOD_IDX_MPRLS0025);
-    ret = iiobuff_setup(mprls_dev);
-
-    /* ICM */
-    habdev_t *icm20x_dev = habdev_alloc();
-    icm20x_dev->trig = icm20x_trig;
-
-    ret = habdev_register(icm20x_dev, IIO_KMOD_IDX_ICM20X);
-    ret = iiobuff_setup(icm20x_dev);
-
-    
-    // ret = iiobuff_log2file(iio_buffer, mprls_dev);
-    
-    // habtrig_free(habtrig);
-    // habdev_free(mprls_dev);
     return 0;
 }

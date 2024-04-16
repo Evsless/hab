@@ -44,9 +44,10 @@ typedef enum {
 } trigtype_t;
 
 typedef struct {
-    char     name[64];
+    u8       id;
+    u8       index;
     u32      period_ms;
-    u8       idx;
+    char     name[64];
     trigtype_t type;
 } habtrig_t;
 
@@ -54,6 +55,7 @@ typedef struct {
  * GLOBAL FUNCTION DECLARATION
  *********************************************************************************************************************/
 habtrig_t *habtrig_alloc(void);
+habtrig_t *habtrig_get(const int index);
 void habtrig_free(habtrig_t *trig);
 stdret_t habtrig_register(habtrig_t *trig, u32 period_ms);
 

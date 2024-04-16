@@ -13,6 +13,9 @@
     str[len - 1] = 0;              \
 }
 
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
+
+
 void to_char(int num, char *str);
 void str_reverse(char *str, int len);
 int str_compare(const char *s1, const char *s2);

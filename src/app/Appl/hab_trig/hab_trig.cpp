@@ -65,7 +65,7 @@ static stdret_t write_period(const habtrig_t *trig, u32 period_ms) {
     char iio_trig_name[16]  = IIO_HRTRIG_BASENAME;
     char iio_trig_num[4]    = {0};
 
-    to_char(trig->idx + IIO_TRIG_OFFSET, iio_trig_num);
+    to_char(trig->index, iio_trig_num);
     strcat(iio_trig_name, iio_trig_num);
     strcat(iio_trig_path, iio_trig_name);
     strcat(iio_trig_path, "/sampling_frequency");
@@ -120,11 +120,24 @@ habtrig_t *habtrig_alloc(void) {
     habtrig = (habtrig_t *)malloc(sizeof(habtrig_t));
 
     if (habtrig) {
-        habtrig->idx = habtrig_cnt;
+        habtrig->id = habtrig_cnt;
         habtrig_list[habtrig_cnt++] = habtrig;
     }
 
     return habtrig;
+}
+
+habtrig_t *habtrig_get(const int index) {
+    habtrig_t *trig = NULL;
+
+    for (usize i = 0; i < ARRAY_SIZE(habtrig_list); i++) {
+        if (index == habtrig_list[i]->index) {
+            trig = habtrig_list[i];
+            break;
+        }
+    }
+
+    return trig;
 }
 
 void habtrig_free(habtrig_t *trig) {
@@ -138,7 +151,7 @@ void habtrig_free(habtrig_t *trig) {
      * TBD - GET RID OF FRAGMENTATION
      * HOW - Linked list implementation.
      */
-    habtrig_list[trig->idx] = NULL;
+    habtrig_list[trig->id] = NULL;
 
     free(trig);
 }

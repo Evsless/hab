@@ -10,6 +10,7 @@
 
 typedef struct {
     u8 id;
+    u8 index;
     char dev_path[64];
     char buff_path[32];
     char log_path[64];
@@ -19,6 +20,7 @@ typedef struct {
 
 
 habdev_t *habdev_alloc(void);
+habdev_t *habdev_get(const u32 idx);
 stdret_t habdev_register(habdev_t *dev, u32 idx);
 void habdev_free(habdev_t *dev);
 
