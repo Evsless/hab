@@ -36,40 +36,51 @@
  *  PREPROCESSOR DEFINITIONS
  *********************************************************************************************************************/
 
+/**********************************************************************************************************************
+ * LOCAL FUNCTION DECLARATION
+ *********************************************************************************************************************/
+CALLBACK MPRLS0025_CALLBACK(uv_timer_t *handle);
+CALLBACK SHT4X_CALLBACK(uv_timer_t *handle);
+
+// CALLBACK ICM20X_CALLBACK(uv_timer_t *handle);
 
 /**********************************************************************************************************************
  * GLOBAL VARIABLES DECLARATION
  *********************************************************************************************************************/
+uv_loop_t *loop;
+
 const u8  dev_idx_list[]  = HABDEV_IDX_SET;
 const u32 trig_val_list[] = TRIG_PERIOD_SET;
 const s16 trig_lut[] = TRIG_LUT;
 
-uv_loop_t *loop;
-uv_timer_t mprls_tim;
+const u8 ev_tim_device[] = DEV_TIM_DEV_IDX;
 
-/**********************************************************************************************************************
- * LOCAL FUNCTION DECLARATION
- *********************************************************************************************************************/
+CALLBACK (*ev_tim_callback_list[])(uv_timer_t *handle) = {
+    MPRLS0025_CALLBACK,
+    SHT4X_CALLBACK,
+};
+
 
 /**********************************************************************************************************************
  * LOCAL FUNCTION DEFINITION
  *********************************************************************************************************************/
-void my_read(uv_timer_t *handle) {
-    habdev_t *dev = (habdev_t *)handle->data;
-    printf("Timer triggered %s\n", dev->dev_path);
-    iiobuff_log2file(dev);
+CALLBACK MPRLS0025_CALLBACK(uv_timer_t *handle) {
+    habdev_t *habdev = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
+    printf("%s\n", habdev->path.dev_path);
 }
 
-int mprls_task(int index) {
-    loop = uv_default_loop();
+CALLBACK SHT4X_CALLBACK(uv_timer_t *handle) {
+    habdev_t *habdev = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
+    printf("%s\n", habdev->path.dev_path);
+}
 
-    habdev_t *dev = habdev_get(index);
-    mprls_tim.data = dev;
 
-    uv_timer_init(loop, &mprls_tim);
-    uv_timer_start(&mprls_tim, my_read, 0, 4000);
+void run_tim_ev(habdev_t *habdev) {
+    int timeout = habdev->event->hcfg.tim_ev.tim_to;
+    int repeat = habdev->event->hcfg.tim_ev.tim_rep;
 
-    return uv_run(loop, UV_RUN_DEFAULT);
+    uv_timer_init(loop, (uv_timer_t *)habdev->event->handle);
+    uv_timer_start((uv_timer_t *)habdev->event->handle, habdev->event->tim_cb, timeout, repeat);
 }
 
 /**********************************************************************************************************************
@@ -88,18 +99,35 @@ void hab_init(void) {
             ret = habtrig_register(habtrig, trig_val_list[i]);
     }
 
-    /* 2. DEVICE ALLOCATION */
+    // /* 2. DEVICE ALLOCATION */
     for (int i = 0; i < ARRAY_SIZE(dev_idx_list); i++) {
         habdev = habdev_alloc();
         habdev->trig = habtrig_get(trig_lut[i]);
         ret = habdev_register(habdev, dev_idx_list[i]);
         ret = iiobuff_setup(habdev);
+        ret = ev_setup(habdev->event, habdev->path.dev_name);
+    }
+
+    /* 3. Assign timer callbacks */
+    for (int i = 0; i < ARRAY_SIZE(ev_tim_device); i++) {
+        habdev = habdev_get(ev_tim_device[i]);
+        habdev->event->tim_cb = ev_tim_callback_list[i];
     }
 }
 
-void hab_run(void) {
+int hab_run(void) {
     int ret = 0;
+    habdev_t *habdev = NULL;
 
-    ret = mprls_task(IIO_KMOD_IDX_MPRLS0025);
+    /* SINGLE THREAD VERSION */
+    loop = uv_default_loop();
+    
+    habdev = habdev_get(0);
+    habdev = habdev_get(1);
+    for (int i = 0; i < ARRAY_SIZE(ev_tim_device); i++) {
+        habdev = habdev_get(i);
+        run_tim_ev(habdev);
+    }
 
+    return uv_run(loop, UV_RUN_DEFAULT);
 }

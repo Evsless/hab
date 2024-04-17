@@ -4,18 +4,24 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include "event.h"
 #include "stdtypes.h"
 #include "hab_trig.h"
 #include "iio_buffer_types.h"
 
 typedef struct {
-    u8 id;
-    u8 index;
+    char dev_name[16];
     char dev_path[64];
     char buff_path[32];
     char log_path[64];
-    iiobuff_format_t buff_format;
+} path_t;
+
+typedef struct {
+    u8 id;
+    u8 index;
+    path_t path;
     habtrig_t *trig;
+    ev_t *event;
 } habdev_t;
 
 

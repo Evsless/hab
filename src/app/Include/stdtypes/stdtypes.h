@@ -20,6 +20,8 @@ typedef int64_t     s64;
 #define MICRO 1000000LU
 #define NANO  1000000000LU
 
+#define CALLBACK void
+
 typedef enum {
     STD_OK,
     STD_NOT_OK,

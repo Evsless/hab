@@ -172,6 +172,8 @@ stdret_t read_file(const char *filepath, char *buff, usize size, file_mode_t fmo
     stdret_t ret = STD_NOT_OK;
     FILE *filp = NULL;
 
+    memset(buff, 0, size);
+
     filp = fopen(filepath, file_modes[fmod]);
     if (NULL == filp) {
         fprintf(stderr, "ERROR: Could not open the file - %s\n", filepath);
