@@ -87,6 +87,9 @@ create_array = {$(subst $(SPACE),$(COMMA) ,$1)}
 to_string = '"$1"'
 
 define-dev-macro-name = -DIIO_KMOD_IDX_$(call to_upper,$1)=$(call get_arr_idx,$1,$(HABDEV_LIST))
+define-dev-callback-macro = -D$(call to_upper,$1)_CALLBACK='$1_callback'
+
+str-eq = $(strip $(filter $1,$2))
 
 ########################################################################################################################
 # UTILITY VARIABLES																									   #

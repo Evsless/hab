@@ -38,6 +38,10 @@ HABDEV_LIST := $(HABDEV_MPRLS) \
 				$(HABDEV_AD5272_2F) \
 				$(HABDEV_MLX90614)
 
+HABDEV_CALLBACK_EV := $(HABDEV_MPRLS)%tim_ev \
+						$(HABDEV_ICM20X)%fs_ev \
+						$(HABDEV_SHT40)%tim_ev
+
 ########################################################################################################################
 # TRIGGER LIST
 ########################################################################################################################
@@ -45,16 +49,16 @@ TRIG_5000  := _5000
 TRIG_20000 := _20000
 TRIG_0     := _0
 
-TRIG_LIST := $(TRIG_0) \
-				$(TRIG_5000) \
-				$(TRIG_20000)
-
 ########################################################################################################################
 # DEVICE-TRIGGER LUT
 ########################################################################################################################
 $(HABDEV_MPRLS)_TRIG := $(TRIG_5000)
 $(HABDEV_ICM20X)_TRIG := $(TRIG_0)
-$(HABDEV_SHT40)_TRIG := $(TRIG_5000)
+$(HABDEV_SHT40)_TRIG := $(TRIG_20000)
+
+rem_rep = $(strip $(shell echo $1 | tr ' ' '\n' | sort -u | tr '\n' ' '))
+_TRIG_LIST = $(foreach elem,$(HABDEV_LIST),$($(elem)_TRIG))
+TRIG_LIST = $(call rem_rep,$(_TRIG_LIST))
 
 ########################################################################################################################
 # MACRO DEFINITIONS
@@ -66,3 +70,25 @@ _TRIG_LUT_RAW 		= $(foreach elem,$(HABDEV_LIST),$(call get_arr_idx,$($(elem)_TRI
 TRIG_LUT_ARRAY 		= $(call create_array,$(_TRIG_LUT_RAW))
 
 HABDEV_MACRO_LIST = $(foreach habmod,$(HABDEV_LIST),$(call define-dev-macro-name,$(habmod)))
+
+# CALLBACKS
+HABDEV_CB_NAME_LIST = $(foreach habdev,$(HABDEV_LIST),$(call define-dev-callback-macro,$(habdev)))
+
+get-ev-type = $(lastword $(subst %,$(SPACE),$1))
+get-dev     = $(firstword $(subst %,$(SPACE),$1))
+_TIMER_EV_DEV_IDX = $(foreach callback,$(HABDEV_CALLBACK_EV),\
+						$(if $(call str-eq,$(call get-ev-type,$(callback)),tim_ev),\
+							$(call get_arr_idx,$(call get-dev,$(callback)),$(HABDEV_LIST))-,\
+							$(EMPTY)\
+						)\
+					)
+
+
+TIMER_EV_DEV_IDX = {\
+	$(foreach idx,$(_TIMER_EV_DEV_IDX),\
+		$(if $(call str-eq,$(idx),$(lastword $(_TIMER_EV_DEV_IDX))),\
+			$(subst -,$(EMPTY),$(idx)),\
+			$(subst -,$(COMMA),$(idx))\
+		)\
+	)\
+}

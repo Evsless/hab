@@ -30,6 +30,7 @@
 #include <unistd.h>
 
 #include "utils.h"
+#include "parser.h"
 #include "iio_buffer_ops.h"
 
 /**********************************************************************************************************************
@@ -56,12 +57,7 @@
 /**********************************************************************************************************************
  * LOCAL TYPEDEFS DECLARATION
  *********************************************************************************************************************/
-
-typedef struct {
-    char setting_group;
-    char setting[64];
-    u32 val;
-} cfgtoken_t;
+ 
 
 /**********************************************************************************************************************
  * GLOBAL VARIABLES DECLARATION
@@ -75,7 +71,6 @@ static void flip_nibbles(char *buffer, usize size);
 static stdret_t get_buff_size(const habdev_t *habdev);
 static stdret_t hexdump_to_file(void *buffer, const int size, const habdev_t *habdev);
 
-static cfgtoken_t parse_cfg(const char *cfg);
 static stdret_t write_cfg(const habdev_t *habdev, const cfgtoken_t *cfg);
 
 static stdret_t find_irq_trigger(habdev_t *habdev);
@@ -83,34 +78,6 @@ static stdret_t find_irq_trigger(habdev_t *habdev);
 /**********************************************************************************************************************
  * LOCAL FUNCTION DEFINITION
  *********************************************************************************************************************/
-static cfgtoken_t parse_cfg(const char *cfg) {
-    cfgtoken_t token;
-    char buff[64] = {0};
-    
-    u8 token_idx  = 0;
-    usize cfg_idx = 0;
-
-    token.val = 1;
-    while(get_word(cfg, &cfg_idx, buff, sizeof(buff)) >= 0) {
-        switch (token_idx) {
-            case SETTING_GROUP:
-                token.setting_group = buff[0];
-                break;
-            case SETTING:
-                token.setting[0] = '/'; /* Think of better way of handling that */
-                strcpy(token.setting + 1, buff);
-                break;
-            case SETTING_VALUE:
-                token.val = atoi(buff);
-                break;
-            default:
-                break;
-        }
-        token_idx++;
-    }
-
-    return token;
-}
 
 static stdret_t write_cfg(const habdev_t *habdev, const cfgtoken_t *cfg) {
     stdret_t ret = STD_NOT_OK;
@@ -126,7 +93,7 @@ static stdret_t write_cfg(const habdev_t *habdev, const cfgtoken_t *cfg) {
         /* ERROR HANDLING ?*/
     }
 
-    ret = create_path(setting_path, 3, habdev->dev_path, setting_group, cfg->setting);
+    ret = create_path(setting_path, 3, habdev->path.dev_path, setting_group, cfg->setting);
     to_char(cfg->val, wr_buff);
     ret = write_file(setting_path, wr_buff, sizeof(wr_buff), MOD_W);
 
@@ -155,11 +122,6 @@ static stdret_t find_irq_trigger(habdev_t *habdev) {
     bool repeat = true;
     bool line_begin = true;
 
-    /* Read device name. Same name is used in /proc/interrupts list. */
-    ret = create_path(line, 2, habdev->dev_path, "/name");
-    ret = read_file(line, dev_name, sizeof(dev_name), MOD_R);
-    CROP_NEWLINE(dev_name, strlen(dev_name));
-
     while(get_line(IRQ_LIST_PATH, &fpos, line, sizeof(line)) >= 0 && repeat) {
         while(get_word(line, &lpos, word, sizeof(word)) >= 0 && repeat) {
             if (line_begin) {
@@ -167,7 +129,7 @@ static stdret_t find_irq_trigger(habdev_t *habdev) {
                 strcpy(first_word, word);
             }
 
-            if (0 == str_compare(dev_name, word)) {
+            if (0 == str_compare(habdev->path.dev_name, word)) {
                 repeat = false;
             }
         }
@@ -192,7 +154,6 @@ static stdret_t find_irq_trigger(habdev_t *habdev) {
  * GLOBAL FUNCTION DEFINITION
  *********************************************************************************************************************/
 stdret_t iiobuff_setup(habdev_t *habdev) {
-    FILE *filp = NULL;
     stdret_t ret = STD_NOT_OK;
     usize cfg_pos = 0;
     cfgtoken_t token;
@@ -207,18 +168,13 @@ stdret_t iiobuff_setup(habdev_t *habdev) {
     char append_buff[64] = {0};
 
     /* Setting up a trigger for a buffer */
-    ret = create_path(filepath_buff, 3, habdev->dev_path, "/trigger", "/current_trigger");
+    ret = create_path(filepath_buff, 3, habdev->path.dev_path, "/trigger", "/current_trigger");
     ret = write_file(filepath_buff, habdev->trig->name, sizeof(habdev->trig->name), MOD_W);
 
-    /* Reading the device name */
-    ret = create_path(filepath_buff, 2, habdev->dev_path, "/name");
-    ret = read_file(filepath_buff, append_buff, sizeof(append_buff), MOD_R);
-
-    memset(filepath_buff, 0, sizeof(filepath_buff));
-    ret = create_path(filepath_buff, 2, HAB_BUFF_CFG_PATH, append_buff);
+    ret = create_path(filepath_buff, 2, HAB_BUFF_CFG_PATH, habdev->path.dev_name);
     
     while (get_line(filepath_buff, &cfg_pos, append_buff, sizeof(append_buff)) >= 0) {
-        token = parse_cfg(append_buff);
+        token = parser_buffcfg(append_buff);
         ret   = write_cfg(habdev, &token);
     }
 
@@ -231,14 +187,14 @@ stdret_t iiobuff_log2file(const habdev_t *habdev) {
     char blen[8];
     char buffer[128];
 
-    ret = create_path(buffer, 2, habdev->dev_path, BUFF_LEN_SUBPATH);
+    ret = create_path(buffer, 2, habdev->path.dev_path, BUFF_LEN_SUBPATH);
     ret = read_file(buffer, blen, sizeof(buffer), MOD_R);
     size = atoi(blen);
 
-    ret = read_file(habdev->buff_path, data_buffer, size * HEXDUMP_RECORD_LEN, MOD_RW);
+    ret = read_file(habdev->path.buff_path, data_buffer, size * HEXDUMP_RECORD_LEN, MOD_RW);
     flip_nibbles(data_buffer, size * HEXDUMP_RECORD_LEN);
 
-    ret = hexdump(habdev->log_path, data_buffer, size);
+    ret = hexdump(habdev->path.log_path, data_buffer, size);
 
     ret = STD_OK;
     return ret;

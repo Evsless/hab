@@ -9,10 +9,13 @@ PHONIES 			?=
 HABMASTER_BIN_NAME 	:= $(HAB_OUT_BIN_PATH)/hab_master
 GPP_ARG_INCLUDE 	:= $(foreach header,$(HAB_INCLUDE_LIST),-I$(header))
 GPP_ARG_PREPROC     := $(HABDEV_MACRO_LIST) \
+						$(HABDEV_CB_NAME_LIST) \
 						-DHABDEV_IDX_SET='$(HABDEV_IDX_ARRAY)' \
 						-DTRIG_PERIOD_SET='$(TRIG_ARRAY)' \
 						-DTRIG_LUT='$(TRIG_LUT_ARRAY)' \
-						-DHAB_BUFF_CFG_PATH=$(call to_string,$(HAB_BUFF_CFG_PATH)/)
+						-DEV_TIM_DEV_IDX='$(TIMER_EV_DEV_IDX)' \
+						-DHAB_BUFF_CFG_PATH=$(call to_string,$(HAB_BUFF_CFG_PATH)/) \
+						-DHAB_EV_CFG_PATH=$(call to_string,$(HAB_EV_CFG_PATH)/)
 
 
 build_all_hab: $(HABMASTER_BIN_NAME)
@@ -23,6 +26,7 @@ PHONIES += build_all_hab
 
 PHONIES += test_print
 test_print:
-	@echo HABDEV_ARR: $(HABDEV_MACRO_LIST)
+	@echo TIMER_EV_DEV_IDX: $(HABDEV_CB_NAME_LIST)
+
 
 PHONY: $(PHONIES)

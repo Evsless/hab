@@ -6,21 +6,13 @@
 
 #include "stdtypes.h"
 #include "hab_trig.h"
-#include "iio_buffer_types.h"
-
-typedef struct {
-    u8 id;
-    u8 index;
-    char dev_path[64];
-    char buff_path[32];
-    char log_path[64];
-    iiobuff_format_t buff_format;
-    habtrig_t *trig;
-} habdev_t;
-
+#include "hab_device_types.h"
 
 habdev_t *habdev_alloc(void);
 habdev_t *habdev_get(const u32 idx);
+void habdev_ev_set(habdev_t *habdev, ev_t *event);
+void habdev_trig_set(habdev_t *habdev, habtrig_t *trig);
+
 stdret_t habdev_register(habdev_t *dev, u32 idx);
 void habdev_free(habdev_t *dev);
 
