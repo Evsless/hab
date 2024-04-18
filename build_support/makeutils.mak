@@ -74,8 +74,8 @@ indexify = $(foreach elem,$1,$(call get_arr_idx,$(elem),$1))
 #     INPUT:
 #         0 5000 10000
 #     OUTPUT:
-#         {0, 5000, 10000}
-create_array = {$(subst $(SPACE),$(COMMA) ,$1)}
+#         {0, 5000, 10000} $(elem)$(COMMA)
+create_array = {$(foreach elem,$1,$(if $(call str-eq,$(elem),$(EMPTY)),$(EMPTY),$(if $(call str-eq,$(elem),$(lastword $1)),$(elem),$(elem)$(COMMA))))}
 
 # FUNCTION: to_string
 #
@@ -86,10 +86,38 @@ create_array = {$(subst $(SPACE),$(COMMA) ,$1)}
 #      $1 - an elements that must be casted to string
 to_string = '"$1"'
 
-define-dev-macro-name = -DIIO_KMOD_IDX_$(call to_upper,$1)=$(call get_arr_idx,$1,$(HABDEV_LIST))
-define-dev-callback-macro = -D$(call to_upper,$1)_CALLBACK='$1_callback'
-
+# FUNCTION: str-eq
+#
+# DESCRIPTION:
+#      Check if given strings are equal. If not, return empty, otherwise the given string.
+# ARGS:
+#      $1 - first string string to be compared;
+#      $2 - second string string to be compared.
 str-eq = $(strip $(filter $1,$2))
+
+# FUNCTION: define-dev-callback-name
+#
+# DESCRIPTION:
+#      Defines a callback name that will be used inside the application code.
+# ARGS:
+#      $1 - callback basename (device code);
+define-dev-callback-name = '$1_callback'
+
+# FUNCTION: define-dev-macro-name
+#
+# DESCRIPTION:
+#      Defines a macro name with device ID value, that later will be used inside an app.
+# ARGS:
+#      $1 - device name stored inside $(HABDEV_LIST);
+define-dev-macro-name = -DIIO_KMOD_IDX_$(call to_upper,$1)=$(call get_arr_idx,$1,$(HABDEV_LIST))
+
+# FUNCTION: remove_repetition
+#
+# DESCRIPTION:
+#      Removes repetitions in the given string.
+# ARGS:
+#      $1 - a string where repetitions must be removed.
+remove_repetition = $(strip $(shell echo $1 | tr ' ' '\n' | sort -u | tr '\n' ' '))
 
 ########################################################################################################################
 # UTILITY VARIABLES																									   #
@@ -98,3 +126,6 @@ str-eq = $(strip $(filter $1,$2))
 EMPTY :=
 SPACE := $(EMPTY) $(EMPTY)
 COMMA :=,
+
+TIM_CB := tim
+FS_CB  := fs

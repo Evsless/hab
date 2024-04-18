@@ -26,7 +26,6 @@ typedef enum {
     MOD_NO
 } file_mode_t;
 
-void to_char(int num, char *str);
 void str_reverse(char *str, int len);
 int str_compare(const char *s1, const char *s2);
 

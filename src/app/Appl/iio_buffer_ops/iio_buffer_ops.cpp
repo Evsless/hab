@@ -12,7 +12,7 @@
 *       Yahor Yauseyenka    email: yahoryauseyenka@gmail.com                                                          *
 *                                                                                                                     *
 * VERSION                                                                                                             *
-*       0.0.2               last modification: 14-04-2024                                                             *
+*       0.0.3               last modification: 18-04-2024                                                             *
 *                                                                                                                     *
 * LICENSE                                                                                                             *
 *       GPL                                                                                                           *
@@ -93,8 +93,9 @@ static stdret_t write_cfg(const habdev_t *habdev, const cfgtoken_t *cfg) {
         /* ERROR HANDLING ?*/
     }
 
+    snprintf(wr_buff, sizeof(wr_buff), "%d", cfg->val);
     ret = create_path(setting_path, 3, habdev->path.dev_path, setting_group, cfg->setting);
-    to_char(cfg->val, wr_buff);
+
     ret = write_file(setting_path, wr_buff, sizeof(wr_buff), MOD_W);
 
     return ret;
@@ -113,7 +114,6 @@ static stdret_t find_irq_trigger(habdev_t *habdev) {
     stdret_t ret;
     char line[128] = {0};
     char word[64]  = {0};
-    char dev_name[32] = {0};
     char first_word[32] = {0};
 
     usize fpos = 0;

@@ -38,6 +38,7 @@
  *********************************************************************************************************************/
 #define IIO_HRTRIG_CONFIGFS_PATH "/config/iio/triggers/hrtimer/"
 #define IIO_HRTRIG_SYSFS_PATH    "/sys/bus/iio/devices/"
+#define IIO_HRTRIG_SF_SUBPATH    "/sampling_frequency"
 #define IIO_HRTRIG_BASENAME      "trigger"
 
 #define HAB_HRTRIG_BASENAME      "habtrig-"
@@ -58,28 +59,17 @@ static stdret_t write_period(const habtrig_t *trig, u32 period_ms);
  *********************************************************************************************************************/
 static stdret_t write_period(const habtrig_t *trig, u32 period_ms) {
     stdret_t ret = STD_NOT_OK;
-    FILE *filp = NULL;
     float freq = 1 * MILLI / (float)period_ms;
 
-    char iio_trig_path[128] = IIO_HRTRIG_SYSFS_PATH;
-    char iio_trig_name[16]  = IIO_HRTRIG_BASENAME;
-    char iio_trig_num[4]    = {0};
+    char path_buff[128] = {0};
+    char write_buff[16]  = {0};
 
-    to_char(trig->index, iio_trig_num);
-    strcat(iio_trig_name, iio_trig_num);
-    strcat(iio_trig_path, iio_trig_name);
-    strcat(iio_trig_path, "/sampling_frequency");
+    snprintf(path_buff, sizeof(path_buff), "%s%s%d%s", 
+                IIO_HRTRIG_SYSFS_PATH, IIO_HRTRIG_BASENAME, trig->index, IIO_HRTRIG_SF_SUBPATH);
+    snprintf(write_buff, sizeof(write_buff), "%f", freq);
 
-    filp = fopen(iio_trig_path, "w");
-    if (NULL == filp) {
-        fprintf(stderr, "ERROR: Could not open the file: %s\n", iio_trig_path);
-        return ret;
-    }
+    ret = write_file(path_buff, write_buff, sizeof(write_buff), MOD_W);
 
-    fprintf(filp, "%f", freq);
-    fclose(filp);
-
-    ret = STD_OK;
     return ret;
 }
 
@@ -90,21 +80,16 @@ stdret_t habtrig_register(habtrig_t *trig, u32 period_ms) {
     stdret_t ret  = STD_NOT_OK;
     int mkdir_ret = 0;
 
-    char trig_path[128]  = IIO_HRTRIG_CONFIGFS_PATH;
-    char trig_name[64]   = HAB_HRTRIG_BASENAME;
-    char trig_period[16] = {0};
+    char trig_path[128]  = {0};
 
-    to_char(period_ms, trig_period);
-
-    strcat(trig_name, trig_period);
-    strcat(trig_path, trig_name);
+    snprintf(trig_path, sizeof(trig_path), "%s%s%d", IIO_HRTRIG_CONFIGFS_PATH, HAB_HRTRIG_BASENAME, period_ms);
 
     mkdir_ret = mkdir(trig_path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     if (mkdir_ret >= 0) {
         trig->period_ms = period_ms;
         trig->type = T_HRTIM;
-        strcpy(trig->name, trig_name);
+        snprintf(trig->name, sizeof(trig->name), "%s%d", HAB_HRTRIG_BASENAME, trig->period_ms);
 
         ret = write_period(trig, period_ms);
     }

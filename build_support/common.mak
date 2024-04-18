@@ -8,7 +8,7 @@ KMOD_ADS1115   := ads1115
 KMOD_AD5272    := ad5272
 KMOD_MLX90614  := mlx90614
 
-HAB_KMOD_LIST += $(KMOD_MPRLS0025) 		\
+HAB_KMOD_LIST := $(KMOD_MPRLS0025) 		\
 					$(KMOD_ICM20948) 	\
 					$(KMOD_SHT40) 		\
 					$(KMOD_ADS1115) 	\
@@ -38,57 +38,60 @@ HABDEV_LIST := $(HABDEV_MPRLS) \
 				$(HABDEV_AD5272_2F) \
 				$(HABDEV_MLX90614)
 
-HABDEV_CALLBACK_EV := $(HABDEV_MPRLS)%tim_ev \
-						$(HABDEV_ICM20X)%fs_ev \
-						$(HABDEV_SHT40)%tim_ev
+########################################################################################################################
+# DEVICE-EVENT HASHTABLE
+########################################################################################################################
+$(HABDEV_MPRLS)_EV 			:= $(TIM_CB)
+$(HABDEV_ICM20X)_EV 		:= $(FS_CB)
+$(HABDEV_SHT40)_EV 			:= $(TIM_CB)
+$(HABDEV_ADS1115_48)_EV 	:= $(TIM_CB)
+$(HABDEV_ADS1115_49)_EV 	:= $(TIM_CB)
+$(HABDEV_MLX90614)_EV 		:= $(TIM_CB)
 
 ########################################################################################################################
 # TRIGGER LIST
 ########################################################################################################################
 TRIG_5000  := _5000
 TRIG_20000 := _20000
+TRIG_10000 := _10000
 TRIG_0     := _0
 
 ########################################################################################################################
-# DEVICE-TRIGGER LUT
+# DEVICE-TRIGGER HASHTABLE
 ########################################################################################################################
-$(HABDEV_MPRLS)_TRIG := $(TRIG_5000)
-$(HABDEV_ICM20X)_TRIG := $(TRIG_0)
-$(HABDEV_SHT40)_TRIG := $(TRIG_20000)
+$(HABDEV_MPRLS)_TRIG 		:= $(TRIG_20000)
+$(HABDEV_ICM20X)_TRIG 		:= $(TRIG_0)
+$(HABDEV_SHT40)_TRIG 		:= $(TRIG_20000)
+$(HABDEV_ADS1115_48)_TRIG 	:= $(TRIG_5000)
+$(HABDEV_ADS1115_49)_TRIG 	:= $(TRIG_5000)
+$(HABDEV_MLX90614)_TRIG 	:= $(TRIG_20000)
 
-rem_rep = $(strip $(shell echo $1 | tr ' ' '\n' | sort -u | tr '\n' ' '))
 _TRIG_LIST = $(foreach elem,$(HABDEV_LIST),$($(elem)_TRIG))
-TRIG_LIST = $(call rem_rep,$(_TRIG_LIST))
+TRIG_LIST = $(call remove_repetition,$(_TRIG_LIST))
 
 ########################################################################################################################
 # MACRO DEFINITIONS
 ########################################################################################################################
+# Device indexes. Used for identifying a device inside the application
 HABDEV_IDX_ARRAY 	= $(call create_array,$(call indexify,$(HABDEV_LIST)))
+
+# Trigger delay values. Used when registering trigger.
 TRIG_ARRAY 			= $(call create_array,$(subst _,$(EMPTY),$(TRIG_LIST)))
 
+# Trigger lookup table, the table is alligned with HABDEV_IDX_ARRAY. Elements inside are TRIG_ARRAY indexes.
 _TRIG_LUT_RAW 		= $(foreach elem,$(HABDEV_LIST),$(call get_arr_idx,$($(elem)_TRIG),$(TRIG_LIST)))
 TRIG_LUT_ARRAY 		= $(call create_array,$(_TRIG_LUT_RAW))
 
+# Device indexes of timer triggered events
+_TIMER_EV_DEV_IDX = $(foreach elem,$(HABDEV_LIST),$(if $(call str-eq,$($(elem)_EV),$(TIM_CB)),$(call get_arr_idx,$(elem),$(HABDEV_LIST)),$(EMPTY)))
+TIMER_EV_DEV_IDX  = $(call create_array,$(_TIMER_EV_DEV_IDX))
+
 HABDEV_MACRO_LIST = $(foreach habmod,$(HABDEV_LIST),$(call define-dev-macro-name,$(habmod)))
 
-# CALLBACKS
-HABDEV_CB_NAME_LIST = $(foreach habdev,$(HABDEV_LIST),$(call define-dev-callback-macro,$(habdev)))
+# Callback names. Used when implementing callback for a device.
+_USED_CALLBACKS = $(foreach habdev,$(HABDEV_LIST),$(if $($(habdev)_EV),$(habdev),$(EMPTY)))
+HABDEV_CB_NAME_LIST = $(foreach cb,$(_USED_CALLBACKS),-D$(call to_upper,$(cb))_CALLBACK=$(call define-dev-callback-name,$(cb)))
 
-get-ev-type = $(lastword $(subst %,$(SPACE),$1))
-get-dev     = $(firstword $(subst %,$(SPACE),$1))
-_TIMER_EV_DEV_IDX = $(foreach callback,$(HABDEV_CALLBACK_EV),\
-						$(if $(call str-eq,$(call get-ev-type,$(callback)),tim_ev),\
-							$(call get_arr_idx,$(call get-dev,$(callback)),$(HABDEV_LIST))-,\
-							$(EMPTY)\
-						)\
-					)
-
-
-TIMER_EV_DEV_IDX = {\
-	$(foreach idx,$(_TIMER_EV_DEV_IDX),\
-		$(if $(call str-eq,$(idx),$(lastword $(_TIMER_EV_DEV_IDX))),\
-			$(subst -,$(EMPTY),$(idx)),\
-			$(subst -,$(COMMA),$(idx))\
-		)\
-	)\
-}
+# Callback list - a list of callbacks from HABDEV_CB_NAME_LIST, that must be used within the application.
+_CB_LIST = $(foreach cb,$(_USED_CALLBACKS),$(call define-dev-callback-name,$(cb)))
+CB_LIST = $(call create_array,$(_CB_LIST))

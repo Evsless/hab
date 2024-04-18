@@ -27,10 +27,11 @@
 #include <uv.h>
 
 #include "hab.h"
-#include "hab_trig.h"
-#include "hab_device.h"
 #include "utils.h"
 #include "event.h"
+#include "callback.h"
+#include "hab_trig.h"
+#include "hab_device.h"
 #include "iio_buffer_ops.h"
 
 /**********************************************************************************************************************
@@ -43,56 +44,18 @@
  *********************************************************************************************************************/
 const u8  dev_idx_list[]  = HABDEV_IDX_SET;
 const u32 trig_val_list[] = TRIG_PERIOD_SET;
-const s16 trig_lut[] = TRIG_LUT;
+const s8 trig_lut[]       = TRIG_LUT;
 
 const u8 ev_tim_device[] = EV_TIM_DEV_IDX;
 
 uv_loop_t *loop;
-uv_timer_t mprls_tim;
+
+CALLBACK (*ev_tim_callback_list[])(uv_timer_t *handle) = HAB_CALLBACKS;
 
 /**********************************************************************************************************************
  * LOCAL FUNCTION DECLARATION
  *********************************************************************************************************************/
-#ifdef MPRLS0025_CALLBACK
-CALLBACK MPRLS0025_CALLBACK(uv_timer_t *handle);
-#endif
 
-#ifdef SHT4X_CALLBACK
-CALLBACK SHT4X_CALLBACK(uv_timer_t *handle);
-#endif
-
-#ifdef ICM20X_CALLBACK
-CALLBACK ICM20X_CALLBACK(uv_timer_t *handle);
-#endif
-
-
-
-#ifdef MPRLS0025_CALLBACK
-CALLBACK MPRLS0025_CALLBACK(uv_timer_t *handle) {
-    habdev_t *habdev = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
-    printf("%s\n", habdev->path.dev_name);
-}
-#endif
-
-#ifdef SHT4X_CALLBACK
-CALLBACK SHT4X_CALLBACK(uv_timer_t *handle) {
-    habdev_t *habdev = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
-    printf("%s\n", habdev->path.dev_name);
-}
-#endif
-
-#ifdef ICM20X_CALLBACK
-CALLBACK ICM20X_CALLBACK(uv_timer_t *handle) {
-    habdev_t *habdev = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
-    printf("%s\n", habdev->path.dev_name);
-}
-#endif
-
-
-CALLBACK (*ev_tim_callback_list[])(uv_timer_t *handle) = {
-    MPRLS0025_CALLBACK,
-    SHT4X_CALLBACK,
-};
 
 /**********************************************************************************************************************
  * LOCAL FUNCTION DEFINITION
@@ -125,14 +88,17 @@ void hab_init(void) {
     /* 2. DEVICE ALLOCATION */
     for (int i = 0; i < ARRAY_SIZE(dev_idx_list); i++) {
         habdev = habdev_alloc();
-        event  = event_alloc();
-
-        habdev_ev_set(habdev, event);
-        habdev_trig_set(habdev, habtrig_get(trig_lut[i]));
-
         ret = habdev_register(habdev, dev_idx_list[i]);
-        ret = iiobuff_setup(habdev);
-        ret = ev_setup(habdev);
+
+        if (trig_lut[i] != -1) {
+            event  = event_alloc();
+
+            habdev_ev_set(habdev, event);
+            habdev_trig_set(habdev, habtrig_get(trig_lut[i]));
+
+            ret = iiobuff_setup(habdev);
+            ret = ev_setup(habdev);
+        }
     }
 
     for (int i = 0; i < ARRAY_SIZE(ev_tim_device); i++) {

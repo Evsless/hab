@@ -5,8 +5,6 @@
 #include "stdtypes.h"
 #include "event_types.h"
 
-#define CALLBACK void
-
 typedef union {
     struct tim_ev {
         int tim_to;

@@ -76,20 +76,6 @@ int str_compare(const char *s1, const char *s2) {
     return (*(const unsigned char *)s1 - *(const unsigned char *)(s2 - 1));
 }
 
-void to_char(int num, char *str) {
-    int len = 0;
-
-    if (num == 0)
-        str[0] = num + '0';
-    
-    while(num) {
-        str[len++] = (num % 10) + '0';
-        num /= 10;
-    }
-
-    str_reverse(str, len);
-}
-
 int get_word(const char *str, usize *pos, char *word, usize size) {
     int idx = 0;
 
