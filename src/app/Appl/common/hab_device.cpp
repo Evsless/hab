@@ -6,18 +6,18 @@
 *       for managing attached devices parameters.                                                                     *
 *                                                                                                                     *
 * PUBLIC FUNCTIONS :                                                                                                  *
-*       habdev_t            *habdev_alloc(void)                                                                       *
+*       habdev_t*           habdev_alloc(void)                                                                        *
 *       stdret_t            habdev_register(habdev_t *habdev, u32 idx)                                                *
 *       void                habdev_ev_set(habdev_t *habdev, ev_t *event)                                              *
 *       void                habdev_trig_set(habdev_t *habdev, habtrig_t *trig)                                        *
-*       habdev_t            *habdev_get(const u32 idx)                                                                *
+*       habdev_t*           habdev_get(const u32 idx)                                                                 *
 *       void                habdev_free(habdev_t *habdev)                                                             *
 *                                                                                                                     *
 * AUTHOR :                                                                                                            *
 *       Yahor Yauseyenka    email: yahoryauseyenka@gmail.com                                                          *
 *                                                                                                                     *
 * VERSION                                                                                                             *
-*       0.0.4               last modification: 18-04-2024                                                             *
+*       0.0.5               last modification: 18-04-2024                                                             *
 *                                                                                                                     *
 * LICENSE                                                                                                             *
 *       GPL                                                                                                           *
@@ -38,15 +38,13 @@
 /**********************************************************************************************************************
  *  MACRO
  *********************************************************************************************************************/
-#define IIO_BUFF_DEVFS_PATH  "/dev/iio:"
-
 #define IIO_DEV_SYSFS_PATH   "/sys/bus/iio/devices/iio:"
+#define IIO_BUFF_DEVFS_PATH  "/dev/iio:"
+#define HAB_DATASTORAGE_PATH "/media/hab_flight_data/"
 #define IIO_DEV_NAME_SUBPATH "/name"
 #define IIO_DEV_ADDR_SUBPATH "/of_node/reg"
 
-#define IIO_DEV_BASENAME    "device"
-
-#define HAB_DATASTORAGE_PATH "/media/hab_flight_data/"
+#define IIO_DEV_BASENAME "device"
 
 /**********************************************************************************************************************
  * LOCAL TYPEDEFS DECLARATION
@@ -93,7 +91,7 @@ habdev_t *habdev_alloc(void) {
 
 stdret_t habdev_register(habdev_t *habdev, u32 idx) {
     stdret_t ret = STD_NOT_OK;
-    char dev_name[16] = IIO_DEV_BASENAME;
+    char dev_name[16] = {0};
     char dev_index[8] = {0};
     char path_buff[64] = {0};
 
@@ -102,7 +100,6 @@ stdret_t habdev_register(habdev_t *habdev, u32 idx) {
     sprintf(dev_name, "%s%d", IIO_DEV_BASENAME, idx);
 
     ret = create_path(habdev->path.dev_path, 2, IIO_DEV_SYSFS_PATH, dev_name);
-    ret = create_path(habdev->path.buff_path, 2, IIO_BUFF_DEVFS_PATH, dev_name);
 
     /* Read the device driver name (that is, the module name) */
     ret = create_path(path_buff, 2, habdev->path.dev_path, IIO_DEV_NAME_SUBPATH);
@@ -151,3 +148,7 @@ habdev_t *habdev_get(const u32 idx) {
 void habdev_free(habdev_t *habdev) {
     free(habdev);
 }
+
+/***********************************************************************************************************************
+ * END OF FILE
+ **********************************************************************************************************************/

@@ -7,8 +7,8 @@
 typedef struct {
     char dev_name[16];
     char dev_path[64];
-    char buff_path[32];
     char log_path[64];
+    char *dev_data[16];
 } hab_path_t;
 
 typedef struct {

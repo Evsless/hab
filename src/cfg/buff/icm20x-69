@@ -1,0 +1,6 @@
+type iio_buff
+ch in_accel_x_en 1
+ch in_accel_y_en 1
+ch in_accel_z_en 1
+buf length 512
+buf enable 1

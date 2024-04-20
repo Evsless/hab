@@ -7,12 +7,13 @@
 *                                                                                                                     *
 * PUBLIC FUNCTIONS :                                                                                                  *
 *       stdret_t            iiobuff_log2file(char *ubuff, const habdev_t *habdev)                                     *
+*       stdret_t            iiobuff_setup(habdev_t *habdev)                                                           *
 *                                                                                                                     *
 * AUTHOR :                                                                                                            *
 *       Yahor Yauseyenka    email: yahoryauseyenka@gmail.com                                                          *
 *                                                                                                                     *
 * VERSION                                                                                                             *
-*       0.0.3               last modification: 18-04-2024                                                             *
+*       0.0.4               last modification: 20-04-2024                                                             *
 *                                                                                                                     *
 * LICENSE                                                                                                             *
 *       GPL                                                                                                           *
@@ -40,19 +41,18 @@
 # error "ERROR: Path to buffer configuration folder is not specified."
 #endif
 
-#define IRQ_LIST_PATH      "/proc/interrupts"
+#define IRQ_LIST_PATH         "/proc/interrupts"
+#define IIO_BUFF_DEVFS_PATH   "/dev/iio:"
+#define BUFF_CH_SUBPATH       "/scan_elements/"
+#define BUFF_LEN_SUBPATH      "/buffer/length"
+#define BUFF_EN_SUBPATH       "/buffer/enable"
+#define BUFF_DATA_RDY_SUBPATH "/buffer/data_available"
+
+#define IIO_DEV_BASENAME    "device"
 #define IRQ_TRIG_BASENAME  "irqtrig-"
 
+#define IIO_BUFF_PATH_SIZE 32U
 #define HEXDUMP_RECORD_LEN 0x10
-#define BUFF_LEN_SUBPATH   "/buffer/data_available"
-
-#define BUFF_CFG_SCAN_ELEM "scan_elements/"
-#define BUFF_CFG_LEN       "buffer/length"
-#define BUFF_CFG_EN        "buffer/enable"
-
-#define SETTING_GROUP 0
-#define SETTING 1
-#define SETTING_VALUE 2
 
 /**********************************************************************************************************************
  * LOCAL TYPEDEFS DECLARATION
@@ -83,19 +83,19 @@ static stdret_t write_cfg(const habdev_t *habdev, const cfgtoken_t *cfg) {
     stdret_t ret = STD_NOT_OK;
     char wr_buff[8] = {0};
     char setting_path[128] = {0};
-    const char *setting_group = NULL;
 
-    if ('c' == cfg->setting_group) {
-        setting_group = "/scan_elements";
-    } else if ('b' == cfg->setting_group) {
-        setting_group = "/buffer";
+    if (cfg->cfg_type >= CFG_CH_IN_TS) {
+        ret = create_path(setting_path, 3, habdev->path.dev_path, BUFF_CH_SUBPATH, parser_get_chan(cfg->cfg_type));
+    } else if (CFG_BUFF_LEN == cfg->cfg_type) {
+        ret = create_path(setting_path, 2, habdev->path.dev_path, BUFF_LEN_SUBPATH);
+    } else if (CFG_BUFF_EN == cfg->cfg_type) {
+        ret = create_path(setting_path, 2, habdev->path.dev_path, BUFF_EN_SUBPATH);
     } else {
-        /* ERROR HANDLING ?*/
+        fprintf(stderr, "ERROR: Unknown setting configuration for buffer. Code: %d\n", cfg->cfg_type);
+        return STD_NOT_OK;
     }
 
-    snprintf(wr_buff, sizeof(wr_buff), "%d", cfg->val);
-    ret = create_path(setting_path, 3, habdev->path.dev_path, setting_group, cfg->setting);
-
+    snprintf(wr_buff, sizeof(wr_buff), "%d", atoi(cfg->val));
     ret = write_file(setting_path, wr_buff, sizeof(wr_buff), MOD_W);
 
     return ret;
@@ -158,24 +158,40 @@ stdret_t iiobuff_setup(habdev_t *habdev) {
     usize cfg_pos = 0;
     cfgtoken_t token;
 
+    char file_path[128] = {0};
+    char line[64] = {0};
+
+    /* If buffer is not triggered by hrtim, look for an IRQ trigger */
     if (T_HRTIM != habdev->trig->type) {
         ret = find_irq_trigger(habdev);
         if (STD_OK == ret)
             fprintf(stdout, "INFO: irq-trigger %s for device found.\n", habdev->trig->name);
     }
 
-    char filepath_buff[128] = {0};
-    char append_buff[64] = {0};
 
     /* Setting up a trigger for a buffer */
-    ret = create_path(filepath_buff, 3, habdev->path.dev_path, "/trigger", "/current_trigger");
-    ret = write_file(filepath_buff, habdev->trig->name, sizeof(habdev->trig->name), MOD_W);
+    ret = create_path(file_path, 3, habdev->path.dev_path, "/trigger", "/current_trigger");
+    ret = write_file(file_path, habdev->trig->name, sizeof(habdev->trig->name), MOD_W);
 
-    ret = create_path(filepath_buff, 2, HAB_BUFF_CFG_PATH, habdev->path.dev_name);
-    
-    while (get_line(filepath_buff, &cfg_pos, append_buff, sizeof(append_buff)) >= 0) {
-        token = parser_buffcfg(append_buff);
-        ret   = write_cfg(habdev, &token);
+    ret = create_path(file_path, 2, HAB_BUFF_CFG_PATH, habdev->path.dev_name);
+    while (get_line(file_path, &cfg_pos, line, sizeof(line)) >= 0) {
+        token = parser_parse(line);
+
+        /* Allocate a path to buffer only if it is enabled */
+        if (CFG_BUFF_EN == token.cfg_type) {
+           habdev->path.dev_data[0] = (char *)malloc(IIO_BUFF_PATH_SIZE);
+            if (habdev->path.dev_data[0]) {
+                snprintf(habdev->path.dev_data[0], IIO_BUFF_PATH_SIZE, 
+                        "%s%s%d", IIO_BUFF_DEVFS_PATH, IIO_DEV_BASENAME, habdev->index);
+            } else {
+                fprintf(stderr, "ERROR: Memory allocation error. Alocation for iio %s device\n", habdev->path.dev_name);
+                return STD_NOT_OK;
+            } 
+        }
+
+        /* Write config when not configuring the CFG_DEV_TYPE */
+        if ((token.cfg_type >> 2) != 1)
+            ret  = write_cfg(habdev, &token);
     }
 
     return ret;
@@ -187,11 +203,11 @@ stdret_t iiobuff_log2file(const habdev_t *habdev) {
     char blen[8];
     char buffer[128];
 
-    ret = create_path(buffer, 2, habdev->path.dev_path, BUFF_LEN_SUBPATH);
+    ret = create_path(buffer, 2, habdev->path.dev_path, BUFF_DATA_RDY_SUBPATH);
     ret = read_file(buffer, blen, sizeof(buffer), MOD_R);
     size = atoi(blen);
 
-    ret = read_file(habdev->path.buff_path, data_buffer, size * HEXDUMP_RECORD_LEN, MOD_RW);
+    ret = read_file(habdev->path.dev_data[0], data_buffer, size * HEXDUMP_RECORD_LEN, MOD_RW);
     flip_nibbles(data_buffer, size * HEXDUMP_RECORD_LEN);
 
     ret = hexdump(habdev->path.log_path, data_buffer, size);
@@ -199,3 +215,8 @@ stdret_t iiobuff_log2file(const habdev_t *habdev) {
     ret = STD_OK;
     return ret;
 }
+
+/***********************************************************************************************************************
+ * END OF FILE
+ **********************************************************************************************************************/
+ 

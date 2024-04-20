@@ -1,5 +1,6 @@
-c in_voltage0-voltage1_en
-c in_voltage2-voltage3_en
-c in_timestamp_en
-b length 16
-b enable
+type iio_buff
+ch in_voltage0-voltage1_en 1
+ch in_voltage2-voltage3_en 1
+ch in_timestamp_en 1
+buf length 16
+buf enable 1
