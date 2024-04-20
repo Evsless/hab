@@ -11,6 +11,13 @@ typedef struct {
     char *dev_data[16];
 } hab_path_t;
 
+typedef enum {
+    DEV_IIO,
+    DEV_IIO_BUFF,
+    DEV_DEFAULT,
+    DEV_UNKNOWN,
+} dev_type_t;
+
 typedef struct {
     u8 id;
     u8 index;

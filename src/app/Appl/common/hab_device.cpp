@@ -17,7 +17,7 @@
 *       Yahor Yauseyenka    email: yahoryauseyenka@gmail.com                                                          *
 *                                                                                                                     *
 * VERSION                                                                                                             *
-*       0.0.5               last modification: 18-04-2024                                                             *
+*       0.0.6               last modification: 20-04-2024                                                             *
 *                                                                                                                     *
 * LICENSE                                                                                                             *
 *       GPL                                                                                                           *
@@ -33,6 +33,7 @@
 
 #include "utils.h"
 #include "event.h"
+#include "parser.h"
 #include "hab_device.h"
 
 /**********************************************************************************************************************
@@ -118,6 +119,61 @@ stdret_t habdev_register(habdev_t *habdev, u32 idx) {
         ret = create_path(habdev->path.log_path, 2, HAB_DATASTORAGE_PATH, habdev->path.dev_name);
     }
     
+    return ret;
+}
+
+stdret_t habdev_iio_data_setup(habdev_t *habdev) {
+    stdret_t ret = STD_NOT_OK;
+    cfgtoken_t token;
+    dev_type_t dev_type = DEV_UNKNOWN;
+
+    int alloc_size = 0;
+    usize file_pos = 0;
+    usize data_cnt = 0;
+    char dev_data_buff[256] = {0};
+    char file_path[128] = {0};
+    char line[64] = {0};
+    const char *chan = NULL;
+
+    snprintf(file_path, sizeof(file_path), "%s%s", HAB_BUFF_CFG_PATH, habdev->path.dev_name);
+    while (get_line(file_path, &file_pos, line, sizeof(line)) >= 0) {
+        token = parser_parse(line);
+
+        if ((token.cfg_type >> 2) == 1)
+            dev_type = (dev_type_t) (token.cfg_type & 0x03);
+        
+        if ((token.cfg_type >> 7) == 1) {
+            chan = parser_get_chan(token.cfg_type);
+
+            switch (dev_type) {
+                case DEV_IIO:
+                    alloc_size = sizeof(habdev->path.dev_path) + sizeof(chan) + 1;
+                    snprintf(dev_data_buff, alloc_size, "%s/%s", habdev->path.dev_path, chan);
+                    break;
+                case DEV_DEFAULT:
+                    alloc_size = sizeof(token.val);
+                    snprintf(dev_data_buff, alloc_size, "%s", token.val);
+                    break;
+                default:
+                    break;
+            } 
+
+            if ((NULL != chan && dev_type == DEV_IIO) || (token.val[0] != '\0' && dev_type == DEV_DEFAULT) ) {
+                habdev->path.dev_data[data_cnt] = (char *)malloc(alloc_size);
+                if (NULL == habdev->path.dev_data[data_cnt]) {
+                    fprintf(stderr, "ERROR: Error when allocating memory for device data path. Device: %s\n", habdev->path.dev_name);
+                    return STD_NOT_OK;
+                }
+
+                snprintf(habdev->path.dev_data[data_cnt++], alloc_size, "%s", dev_data_buff);
+            } else {
+                fprintf(stderr, "ERROR: Wrong device configuration. Config file: %s\n", file_path);
+                return STD_NOT_OK;
+            }
+
+        }
+    }
+
     return ret;
 }
 

@@ -92,9 +92,10 @@ void hab_init(void) {
 
         if (trig_lut[i] != -1) {
             habdev_trig_set(habdev, habtrig_get(trig_lut[i]));
-
             ret = iiobuff_setup(habdev);
-        } else {
+        } 
+        else {
+            ret = habdev_iio_data_setup(habdev);
             /* Allocate device specific data for non-triggered devs */
         }
     }

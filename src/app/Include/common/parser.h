@@ -30,6 +30,8 @@ typedef enum {
     CFGF_CHAN_IN_V2_V3 = 2,
     CFGF_CHAN_IN_TEMP_AMBIENT = 3,
     CFGF_CHAN_IN_TEMP_OBJECT  = 4,
+    CFGF_CHAN_OUT_RESISTANCE = 5,
+    CFGF_CHAN_CUSTOM = 255,
 } cfg_field_t;
 
 typedef enum {
@@ -46,11 +48,13 @@ typedef enum {
     CFG_CH_IN_V2_V3         = CFG_MEAS_CHAN | CFGF_CHAN_IN_V2_V3,        /* 0x82 */
     CFG_CH_IN_TEMP_AMBIENT  = CFG_MEAS_CHAN | CFGF_CHAN_IN_TEMP_AMBIENT, /* 0x83 */
     CFG_CH_IN_TEMP_OBJECT   = CFG_MEAS_CHAN | CFGF_CHAN_IN_TEMP_OBJECT,  /* 0x84 */
+    CFG_CH_OUT_RESISTANCE   = CFG_MEAS_CHAN | CFGF_CHAN_OUT_RESISTANCE,  /* 0x85 */
+    CFG_CH_CUSTOM           = CFG_MEAS_CHAN | CFGF_CHAN_CUSTOM,          /* 0xFF */
 } cfg_t;
 
 typedef struct {
     cfg_t cfg_type;
-    char val[64];
+    char val[72];
 } cfgtoken_t;
 
 

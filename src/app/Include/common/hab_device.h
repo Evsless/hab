@@ -14,6 +14,8 @@ void habdev_ev_set(habdev_t *habdev, ev_t *event);
 void habdev_trig_set(habdev_t *habdev, habtrig_t *trig);
 
 stdret_t habdev_register(habdev_t *dev, u32 idx);
+stdret_t habdev_iio_data_setup(habdev_t *habdev);
+
 void habdev_free(habdev_t *dev);
 
 

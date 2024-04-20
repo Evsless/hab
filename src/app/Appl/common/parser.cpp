@@ -68,6 +68,8 @@ static const ht_elem_t tokens[] = {
     {"in_voltage2-voltage3_en", CFGF_CHAN_IN_V2_V3},
     {"in_temp_ambient_en", CFGF_CHAN_IN_TEMP_AMBIENT},
     {"in_temp_object_en", CFGF_CHAN_IN_TEMP_OBJECT},
+    {"out_resistance_raw", CFGF_CHAN_OUT_RESISTANCE},
+    {"ch_custom", CFGF_CHAN_CUSTOM},
 };
 
 static const char* channels[] = {
@@ -76,6 +78,7 @@ static const char* channels[] = {
     "in_voltage2-voltage3_en",      /* CFG_CH_IN_V2_V3 */
     "in_temp_ambient_en",           /* CFG_CH_IN_TEMP_AMBIENT */
     "in_temp_object_en",            /* CFG_CH_IN_TEMP_OBJECT */
+    "out_resistance_raw",           /* CFG_CHAN_OUT_RESISTANCE */
 };
 
 /**********************************************************************************************************************
@@ -105,6 +108,7 @@ cfgtoken_t parser_parse(const char *cfg) {
     u8 token_idx  = 0;
     usize cfg_idx = 0;
 
+    memset(&token, 0, sizeof(token));
     while(get_word(cfg, &cfg_idx, word, sizeof(word)) >= 0) {
         switch (token_idx) {
             case 0:
