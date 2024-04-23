@@ -27,7 +27,7 @@ PHONIES += build_all_hab
 
 PHONIES += test_print
 test_print:
-	@echo HABDEV_IDX_ARRAY: $(HABDEV_IDX_ARRAY)
+	@echo HABDEV_IDX_ARRAY: $(HABDEV_MACRO_LIST)
 	@echo TRIG_ARRAY: 	  	$(TRIG_ARRAY)
 	@echo TRIG_LUT_ARRAY:   $(TRIG_LUT_ARRAY)
 	@echo TRIG_LUT_ARRAY:   $(TRIG_LUT_ARRAY)

@@ -127,7 +127,7 @@ int get_line(const char *filepath, usize *foffset, char *buff, usize size) {
     return ret;
 }
 
-stdret_t hexdump(const char *filepath, const char *buff, usize size) {
+stdret_t hexdump(const char *filepath, const char *buff, usize size, const char *append) {
     stdret_t ret = STD_NOT_OK;
     u8 byte = 0;
     FILE *filp = NULL;
@@ -146,7 +146,10 @@ stdret_t hexdump(const char *filepath, const char *buff, usize size) {
             if (j % 2 != 0)
                 fprintf(filp, " ");
         }
-        fprintf(filp, "\n");
+        if (NULL != append)
+            fprintf(filp, "| %s\n", append);
+        else
+            fprintf(filp, "\n");
     }
     fclose(filp);
 
@@ -213,5 +216,18 @@ stdret_t create_path(char *base, usize n, ...) {
     CROP_NEWLINE(base, strlen(base));
     
     ret = STD_OK;
+    return ret;
+}
+
+s64 merge_bytes(const u8 *bytes, const u8 bits) {
+    s64 ret = 0;
+
+    for (int i = 0; i < (bits / 8); i++)
+        ret |= (s64)bytes[i] << (i * 8);
+    
+    /* Handle TS differently? */
+    if (ret & (1 << (bits - 1)))
+        ret = -((1 << bits) - ret);
+    
     return ret;
 }

@@ -1,2 +1,2 @@
 type iio
-ch out_resistance_raw
+ch out_resistance_raw 20

@@ -12,7 +12,7 @@
 *       Yahor Yauseyenka    email: yahoryauseyenka@gmail.com                                                          *
 *                                                                                                                     *
 * VERSION                                                                                                             *
-*       0.0.4               last modification: 20-04-2024                                                             *
+*       0.0.5               last modification: 23-04-2024                                                             *
 *                                                                                                                     *
 * LICENSE                                                                                                             *
 *       GPL                                                                                                           *
@@ -80,6 +80,11 @@ static const char* channels[] = {
     "in_temp_object_en",            /* CFG_CH_IN_TEMP_OBJECT */
     "out_resistance_raw",           /* CFG_CHAN_OUT_RESISTANCE */
 };
+
+/**********************************************************************************************************************
+ * LOCAL FUNCTION DECLARATION
+ *********************************************************************************************************************/
+ static int get_ht_val(const char *key);
 
 /**********************************************************************************************************************
  * LOCAL FUNCTION DEFINITION

@@ -15,6 +15,19 @@
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
+#define max(a, b) ( \
+{ \
+    __typeof__ (a) _a = (a); \
+    __typeof__ (b) _b = (b); \
+     _a > _b ? _a : _b; \
+})
+
+#define min(a, b) ( \
+{ \
+    __typeof__ (a) _a = (a); \
+    __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; \
+})
 
 typedef enum {
     MOD_R = 0,
@@ -32,11 +45,12 @@ int str_compare(const char *s1, const char *s2);
 int get_word(const char *str, usize *pos, char *word, usize size);
 int get_line(const char *filepath, usize *foffset, char *buff, usize size);
 
-stdret_t hexdump(const char *filepath, const char *buff, usize size);
+stdret_t hexdump(const char *filepath, const char *buff, usize size, const char *append);
 stdret_t read_file(const char *filepath, char *buff, usize size, file_mode_t fmod);
 stdret_t write_file(const char *filepath, const char *buff, usize size, file_mode_t fmod);
 
 stdret_t create_path(char *base, usize n, ...);
 
+s64 merge_bytes(const u8 *bytes, const u8 bits);
 
 #endif /* __UTILS_H__ */

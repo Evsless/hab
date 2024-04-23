@@ -165,7 +165,11 @@ stdret_t habdev_iio_data_setup(habdev_t *habdev) {
                     return STD_NOT_OK;
                 }
 
-                snprintf(habdev->path.dev_data[data_cnt++], alloc_size, "%s", dev_data_buff);
+                snprintf(habdev->path.dev_data[data_cnt], alloc_size, "%s", dev_data_buff);
+                /* Write an initial value to the channel if it was provided*/
+                if (token.val[0] != '\0')
+                    (void)write_file(habdev->path.dev_data[data_cnt], token.val, sizeof(token.val), MOD_W);
+                data_cnt++;
             } else {
                 fprintf(stderr, "ERROR: Wrong device configuration. Config file: %s\n", file_path);
                 return STD_NOT_OK;

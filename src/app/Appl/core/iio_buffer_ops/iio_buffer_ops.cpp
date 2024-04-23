@@ -68,16 +68,37 @@ static char data_buffer[4096];
  * LOCAL FUNCTION DECLARATION
  *********************************************************************************************************************/
 static void flip_nibbles(char *buffer, usize size);
-static stdret_t get_buff_size(const habdev_t *habdev);
-static stdret_t hexdump_to_file(void *buffer, const int size, const habdev_t *habdev);
-
+static stdret_t find_irq_trigger(habdev_t *habdev);
 static stdret_t write_cfg(const habdev_t *habdev, const cfgtoken_t *cfg);
 
-static stdret_t find_irq_trigger(habdev_t *habdev);
+static int get_chan_storagebits(const habdev_t *habdev, const char *chan);
 
 /**********************************************************************************************************************
  * LOCAL FUNCTION DEFINITION
  *********************************************************************************************************************/
+static int get_chan_storagebits(const habdev_t *habdev, const char *chan) {
+    int ret = 0;
+    int cnt = 0;
+
+    char tmp = '\0';
+    char cfg_path[128] = {0};
+    char ch_format[32] = {0};
+
+    snprintf(cfg_path, sizeof(cfg_path), "%s/%s/%s",
+            habdev->path.dev_path, "scan_elements", chan);
+    strcpy(cfg_path + (strlen(cfg_path) - 2), "type");
+
+    read_file(cfg_path, ch_format, sizeof(ch_format), MOD_R);
+    CROP_NEWLINE(ch_format, strlen(ch_format))
+
+    for (cnt = 0; tmp != '/'; cnt++)
+        tmp = ch_format[cnt];
+
+    for (; ch_format[cnt] != '>'; cnt++)
+        ret = ret * 10 + (ch_format[cnt] - '0');
+
+    return ret;
+}
 
 static stdret_t write_cfg(const habdev_t *habdev, const cfgtoken_t *cfg) {
     stdret_t ret = STD_NOT_OK;
@@ -192,12 +213,19 @@ stdret_t iiobuff_setup(habdev_t *habdev) {
         /* Write config when not configuring the CFG_DEV_TYPE */
         if ((token.cfg_type >> 2) != 1)
             ret  = write_cfg(habdev, &token);
-    }
 
+        /* Setup buffer layout (ammount of data and its format) */
+        if ((token.cfg_type >> 7) == 1) {
+            if (token.cfg_type != CFG_CH_IN_TS)
+                habdev->df.storagebits[habdev->df.chan_num++] = get_chan_storagebits(habdev, parser_get_chan(token.cfg_type));
+            else
+                habdev->df.ts_en = true;
+        }
+    }
     return ret;
 }
 
-stdret_t iiobuff_log2file(const habdev_t *habdev) {
+int iiobuff_log2file(const habdev_t *habdev, const char *append, u8 *data_cpy) {
     stdret_t ret = STD_NOT_OK;
     int size = 0;
     char blen[8];
@@ -208,12 +236,44 @@ stdret_t iiobuff_log2file(const habdev_t *habdev) {
     size = atoi(blen);
 
     ret = read_file(habdev->path.dev_data[0], data_buffer, size * HEXDUMP_RECORD_LEN, MOD_RW);
+    if (NULL != data_cpy)
+        memcpy(data_cpy, data_buffer, sizeof(data_buffer));
+
     flip_nibbles(data_buffer, size * HEXDUMP_RECORD_LEN);
+    ret = hexdump(habdev->path.log_path, data_buffer, size, append);
 
-    ret = hexdump(habdev->path.log_path, data_buffer, size);
+    return (ret == STD_OK) ? size * HEXDUMP_RECORD_LEN : -1;
+}
 
-    ret = STD_OK;
-    return ret;
+int iiobuff_extract_data(data_format_t format, s64 *dst, const u8 *src, const usize size) {
+    usize batch_size = 0;
+    u64 chan_val = 0;
+    int dst_size = 0, chan_cnt = 0, pad = 0;
+
+    for (int i = 0; i < format.chan_num; i++)
+        batch_size += format.storagebits[i] / BYTE;
+    
+    /* Use case applicable for buffers such as icm20x */
+    batch_size = min(batch_size, HEXDUMP_RECORD_LEN);
+
+    for (usize i = 0; i < size; i += HEXDUMP_RECORD_LEN) {
+        for (usize j = 0; j < batch_size;) {
+            pad = 0;
+            chan_cnt %= format.chan_num;
+            /**
+             * TBD Affter adding a setting we could also log a TS.
+             */
+            // if ((format.chan_num - 1 == chan_cnt) && format.ts_en)
+            //     pad = HEXDUMP_RECORD_LEN - batch_size;
+            
+            chan_val = merge_bytes(src + i + j + pad, format.storagebits[chan_cnt]);
+
+            j += format.storagebits[chan_cnt++] / BYTE;
+            dst[dst_size++] = chan_val;
+        }
+    }
+
+    return dst_size;
 }
 
 /***********************************************************************************************************************
