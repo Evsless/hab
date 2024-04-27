@@ -69,6 +69,9 @@ static const ht_elem_t tokens[] = {
     {"in_temp_ambient_en", CFGF_CHAN_IN_TEMP_AMBIENT},
     {"in_temp_object_en", CFGF_CHAN_IN_TEMP_OBJECT},
     {"out_resistance_raw", CFGF_CHAN_OUT_RESISTANCE},
+    {"in_accel_x_en", CFG_CH_ACCEL_X},
+    {"in_accel_y_en", CFG_CH_ACCEL_Y},
+    {"in_accel_z_en", CFG_CH_ACCEL_Z},
     {"ch_custom", CFGF_CHAN_CUSTOM},
 };
 
@@ -79,6 +82,9 @@ static const char* channels[] = {
     "in_temp_ambient_en",           /* CFG_CH_IN_TEMP_AMBIENT */
     "in_temp_object_en",            /* CFG_CH_IN_TEMP_OBJECT */
     "out_resistance_raw",           /* CFG_CHAN_OUT_RESISTANCE */
+    "in_accel_x_en",                /* CFG_CHAN_OUT_RESISTANCE */
+    "in_accel_y_en",                /* CFG_CHAN_OUT_RESISTANCE */
+    "in_accel_z_en",                /* CFG_CHAN_OUT_RESISTANCE */
 };
 
 /**********************************************************************************************************************

@@ -28,3 +28,4 @@ HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/iio_buffer_ops/iio_buffer_ops.cpp
 
 # 2. USER APPLICATION SRC
 HAB_SRC_LIST += $(HAB_USR_SRC_PATH)/wheatstone.cpp
+HAB_SRC_LIST += $(HAB_USR_SRC_PATH)/ff_detector.cpp

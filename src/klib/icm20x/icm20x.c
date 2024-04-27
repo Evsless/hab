@@ -135,6 +135,12 @@ static struct i2c_driver icm20x_driver = {
 
 module_i2c_driver(icm20x_driver);
 
+/**
+ * The kernel configuration is configured for allocating 2048 bytes max on stack. If below buffer will be defined
+ * on a stack, an error message will occur.
+ */
+ u8 hw_buff_raw[4096] = {0};
+
 /***********************************************************************************************************************
 * INTERNAL FUNCTION DECLARATIONS                                                                                               
 ***********************************************************************************************************************/
@@ -175,21 +181,31 @@ static irqreturn_t icm20x_trigger_handler(int irq, void *p) {
     ret = reg_ops.read_reg(data->client, buffer, sizeof(buffer), ICM20X_REG_FIFO_COUNTH);
     if (ret)
         goto release;
-    fifo_len = ((buffer[0] << 8) | (buffer[1] & 0xFF)) >> 1;
+    fifo_len = (buffer[0] << 8) | (buffer[1] & 0xFF);
 
     /* 3. Read FIFO */
-    ret = reg_ops.read_reg(data->client, (u8 *)data->fifo, sizeof(data->fifo), ICM20X_REG_R_W);
-    if (ret)
-        goto release;
+    ret = reg_ops.read_reg(data->client, hw_buff_raw, sizeof(hw_buff_raw), ICM20X_REG_R_W);
 
-    /* 4. Push collected data to FIFO */
-    for (u16 i = 0; i < fifo_len; i += ICM20X_FIFO_SET_SIZE) {
-        icm20x_arrange_axis_data(&data->fifo[i], indio_dev->active_scan_mask);
-        iio_push_to_buffers(indio_dev, &data->fifo[i]);
-    }
-
-    /* 4. Reset the FIFO */
+    /* 6. Reset the FIFO */
     ret = icm20x_fifo_reset(data);
+    
+    // /* 4. Convert raw data to 16-byte samples */
+    // for (int i = 0; i < fifo_len; i+=2)
+    //     data->fifo[i/2] = (hw_buff_raw[i] << 8) | (hw_buff_raw[i+1] & 0xFF);
+
+    // /* 5. Push collected data to FIFO */
+    // for (u16 i = 0; i < (fifo_len >> 1); i += ICM20X_FIFO_SET_SIZE) {
+    //     icm20x_arrange_axis_data(&data->fifo[i], indio_dev->active_scan_mask);
+    //     iio_push_to_buffers(indio_dev, &data->fifo[i]);
+    // }
+
+    for (int i = 0; i < fifo_len; i += 6) {
+        data->sshot_data.acc_x = (hw_buff_raw[i] << 8)   | (hw_buff_raw[i+1] & 0xFF);
+        data->sshot_data.acc_y = (hw_buff_raw[i+2] << 8) | (hw_buff_raw[i+3] & 0xFF);
+        data->sshot_data.acc_z = (hw_buff_raw[i+4] << 8) | (hw_buff_raw[i+5] & 0xFF);
+        
+        iio_push_to_buffers(indio_dev, &data->sshot_data);
+    }
 
 release:
 
@@ -220,6 +236,7 @@ static int icm20x_read_reg(const struct i2c_client *client, u8 *buf, u32 size, c
     int ret = 0;
     u8 target_reg = reg;
 
+    memset(buf, 0, size);
     ret = icm20x_write_reg(client, &target_reg, sizeof(target_reg));
     if (ret)
         return ret;
@@ -337,7 +354,7 @@ static int icm20x_init(struct icm20x_data *data) {
         return ret;
     
     buffer[0] = ICM20X_REG_ACCEL_SMPLRT_DIV_2;
-    buffer[1] = 0x0A;
+    buffer[1] = 0x03;
     ret = reg_ops.write_reg(data->client, buffer, sizeof(buffer));
     if (ret)
         return ret;
@@ -348,8 +365,9 @@ static int icm20x_init(struct icm20x_data *data) {
     if (ret)
         return ret;
 
+    /* Filters could be disaled. The SF will be much more bigger then. */
     buffer[0] = ICM20X_REG_ACCEL_CONFIG;
-    buffer[1] = ICM20X_MASK_ACCEL_CONFIG_ACCEL_FS_SEL_2G |
+    ICM20X_MASK_ACCEL_CONFIG_ACCEL_FS_SEL_2G |
                     ICM20X_MASK_ACCEL_CONFIG_ACCEL_FCHOICE_ON;
     ret = reg_ops.write_reg(data->client, buffer, sizeof(buffer));
 
@@ -374,7 +392,7 @@ static int icm20x_buffer_postenable(struct iio_dev *indio_dev) {
      * 1) Enable FIFO;
      * 2) Write accel to FIFO;
      * 3) Setup FIFO mode;
-     * 4) Enable FIFO overflow irq.
+     * 4) Enable FIFO overflow irq (depends on config).
     */
     buffer[0] = ICM20X_REG_USER_CTRL;
     buffer[1] = ICM20X_MASK_USER_CTRL_FIFO_EN;
@@ -394,13 +412,13 @@ static int icm20x_buffer_postenable(struct iio_dev *indio_dev) {
     if (ret)
         goto release;
     
-    if (data->irq > 0) {
-        buffer[0] = ICM20X_REG_INT_ENABLE_2;
-        buffer[1] = ICM20X_MASK_INT_ENABLE_2_FIFO_OVERFLOW_EN;
-        ret = reg_ops.write_reg(data->client, buffer, sizeof(buffer));
-        if (ret)
-            goto release;
-    }
+    // if (data->irq > 0) {
+    //     buffer[0] = ICM20X_REG_INT_ENABLE_2;
+    //     buffer[1] = ICM20X_MASK_INT_ENABLE_2_FIFO_OVERFLOW_EN;
+    //     ret = reg_ops.write_reg(data->client, buffer, sizeof(buffer));
+    //     if (ret)
+    //         goto release;
+    // }
 
     ret = icm20x_fifo_reset(data);
 
@@ -538,21 +556,21 @@ static int icm20x_probe(struct i2c_client *client) {
         return ret;
     
     /* HAB Default use case - buffer trigger is INT pin */
-    if (data->irq > 0) {
-        data->trig = devm_iio_trigger_alloc(dev, "irqtrig-%d", data->irq);
-        if (!data->trig)
-            return dev_err_probe(dev, -ENOMEM, "trigger allocation failed\n");
+    // if (data->irq > 0) {
+    //     data->trig = devm_iio_trigger_alloc(dev, "irqtrig-%d", data->irq);
+    //     if (!data->trig)
+    //         return dev_err_probe(dev, -ENOMEM, "trigger allocation failed\n");
         
-        iio_trigger_set_drvdata(data->trig, data);
-        ret = devm_request_irq(dev, data->irq, &iio_trigger_generic_data_rdy_poll, 
-                                    IRQF_SHARED | IRQF_ONESHOT | IRQF_TRIGGER_RISING, indio_dev->name, data->trig);
-        if (ret)
-            return ret;
+    //     iio_trigger_set_drvdata(data->trig, data);
+    //     ret = devm_request_irq(dev, data->irq, &iio_trigger_generic_data_rdy_poll, 
+    //                                 IRQF_SHARED | IRQF_ONESHOT | IRQF_TRIGGER_RISING, indio_dev->name, data->trig);
+    //     if (ret)
+    //         return ret;
 
-        ret = devm_iio_trigger_register(dev, data->trig);
-        if (ret)
-            return ret;
-    }
+    //     ret = devm_iio_trigger_register(dev, data->trig);
+    //     if (ret)
+    //         return ret;
+    // }
     
     ret = devm_iio_triggered_buffer_setup_ext(dev, 
                                               indio_dev, NULL, 

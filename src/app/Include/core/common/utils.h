@@ -29,6 +29,8 @@
      _a < _b ? _a : _b; \
 })
 
+#define isqr(val) ((val) * (val))
+
 typedef enum {
     MOD_R = 0,
     MOD_W,

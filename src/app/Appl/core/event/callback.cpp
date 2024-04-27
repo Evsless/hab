@@ -32,10 +32,32 @@
 #include "utils.h"
 #include "callback.h"
 #include "hab_device.h"
-#include "iio_buffer_ops.h"
 
 #include "wheatstone.h"
+#include "ff_detector.h"
 
+#include <math.h>
+#include <time.h>
+
+// double
+// epoch_double(struct timespec *tv)
+// {
+//   char time_str[32];
+
+//   sprintf(time_str, "%ld.%.9ld", tv->tv_sec, tv->tv_nsec);
+
+//   return atof(time_str);
+// }
+
+// long int
+// epoch_millis(struct timespec *tv)
+// {
+//   double epoch;
+//   epoch = epoch_double(tv);
+//   epoch = round(epoch*1e3);
+
+//   return (long int) epoch;
+// }
 /**********************************************************************************************************************
  *  PREPROCESSOR DEFINITIONS
  *********************************************************************************************************************/
@@ -44,7 +66,6 @@
 /**********************************************************************************************************************
  * LOCAL TYPEDEFS DECLARATION
  *********************************************************************************************************************/
-
 
 /**********************************************************************************************************************
  * GLOBAL VARIABLES DECLARATION
@@ -69,10 +90,20 @@ CALLBACK MPRLS0025_CALLBACK(uv_timer_t *handle) {
 }
 #endif
 
+long int prev = 0;
+
 #ifdef ICM20X_CALLBACK
 CALLBACK ICM20X_CALLBACK(uv_timer_t *handle) {
-    habdev_t *habdev = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
-    printf("%s\n", habdev->path.dev_name);
+    // struct timespec tv;
+    // clock_gettime(CLOCK_REALTIME, &tv);
+
+    // long int ms = epoch_millis(&tv);
+    // printf("TE: %lld\n", ms - prev);
+    // prev = ms;
+
+    habdev_t *icm20x_dev = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
+    ffdet_process_frame(icm20x_dev);
+
 }
 #endif
 

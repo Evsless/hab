@@ -247,17 +247,21 @@ int iiobuff_log2file(const habdev_t *habdev, const char *append, u8 *data_cpy) {
 
 int iiobuff_extract_data(data_format_t format, s64 *dst, const u8 *src, const usize size) {
     usize batch_size = 0;
-    u64 chan_val = 0;
+    s64 chan_val = 0;
     int dst_size = 0, chan_cnt = 0, pad = 0;
+    int data_remain = size;
 
     for (int i = 0; i < format.chan_num; i++)
         batch_size += format.storagebits[i] / BYTE;
     
+    if (false == format.ts_en && (batch_size < 16))
+        batch_size = 16;
+    
     /* Use case applicable for buffers such as icm20x */
-    batch_size = min(batch_size, HEXDUMP_RECORD_LEN);
+    // batch_size = min(n , HEXDUMP_RECORD_LEN);
 
     for (usize i = 0; i < size; i += HEXDUMP_RECORD_LEN) {
-        for (usize j = 0; j < batch_size;) {
+        for (usize j = 0; j < batch_size && data_remain > 0; ) {
             pad = 0;
             chan_cnt %= format.chan_num;
             /**
@@ -268,9 +272,20 @@ int iiobuff_extract_data(data_format_t format, s64 *dst, const u8 *src, const us
             
             chan_val = merge_bytes(src + i + j + pad, format.storagebits[chan_cnt]);
 
+            /**
+             * For a buffer where ammount of data pushed does not devide without a remainder,
+             * an amount of bytes to be proccessed needs to be tracked.
+             * EXAMPLE - icm20x accelerometer. 
+             *     Single portion of data is 6 bytes. It means that hexdump line contains 2 full readouts.
+             *     The rest of thirt readout will be in the 0x10 hexdump line. Without tracking the remainder,
+             *     14 bytes in 0x10 line will unnececarilly stored. 
+             */
+            data_remain -= format.storagebits[chan_cnt] / BYTE;
             j += format.storagebits[chan_cnt++] / BYTE;
             dst[dst_size++] = chan_val;
+            // printf("%ld ", chan_val);
         }
+        // printf("\n");
     }
 
     return dst_size;

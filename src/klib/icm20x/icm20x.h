@@ -79,7 +79,7 @@ struct icm20x_reg_ops {
 #define ICM20X_MASK_ACCEL_CONFIG_ACCEL_FS_SEL_2G  0x00
 #define ICM20X_MASK_ACCEL_CONFIG_ACCEL_FCHOICE_ON 0x01
 
-#define ICM20X_MASK_FIFO_RST_ASSERT   0x01u
+#define ICM20X_MASK_FIFO_RST_ASSERT   0x1Fu
 #define ICM20X_MASK_FIFO_RST_DEASSERT 0x00u
 
 /**************************************************
