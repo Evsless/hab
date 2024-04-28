@@ -89,15 +89,6 @@ void hab_init(void) {
     for (int i = 0; i < ARRAY_SIZE(dev_idx_list); i++) {
         habdev = habdev_alloc();
         ret = habdev_register(habdev, dev_idx_list[i]);
-
-        if (trig_lut[i] != -1) {
-            habdev_trig_set(habdev, habtrig_get(trig_lut[i]));
-            ret = iiobuff_setup(habdev);
-        } 
-        else {
-            ret = habdev_iio_data_setup(habdev);
-            /* Allocate device specific data for non-triggered devs */
-        }
     }
 
     for (int i = 0; i < ARRAY_SIZE(ev_tim_device); i++) {

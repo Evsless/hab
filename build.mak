@@ -9,6 +9,7 @@ PHONIES 			?=
 HABMASTER_BIN_NAME 	:= $(HAB_OUT_BIN_PATH)/hab_master
 GPP_ARG_INCLUDE 	:= $(foreach header,$(HAB_INCLUDE_LIST),-I$(header))
 GPP_ARG_PREPROC     := $(HABDEV_MACRO_LIST) \
+						-DHAB_DEV_NAME='$(DEV_NAMES)' \
 						$(HABDEV_CB_NAME_LIST) \
 						-DHAB_CALLBACKS='$(CB_LIST)' \
 						-DHABDEV_IDX_SET='$(HABDEV_IDX_ARRAY)' \
@@ -34,6 +35,7 @@ test_print:
 	@echo TIMER_EV_DEV_IDX: $(TIMER_EV_DEV_IDX)
 	@echo HABDEV_CB_NAME_LIST: $(HABDEV_CB_NAME_LIST)
 	@echo CB_LIST: $(CB_LIST)
+	@echo CAMWHORE: $(_DEV_NAMES)
 
 
 PHONY: $(PHONIES)

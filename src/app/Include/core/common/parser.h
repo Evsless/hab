@@ -46,6 +46,7 @@ typedef enum {
     CFG_EV_FS     = 0x01 << 1,
     CFG_DEV_TYPE  = 0x01 << 2,
     CFG_BUFF      = 0x01 << 3,
+    CFG_CMD       = 0x01 << 4,
     CFG_MEAS_CHAN = 0x01 << 7,
 } cfg_type_t;
 
@@ -59,9 +60,13 @@ typedef enum {
     CFGF_IIO = 0,
     CFGF_IIO_BUFF = 1,
     CFGF_DEFAULT = 2,
+    CFGF_CAMERA = 3,
     /* BUFFER CONFIGURATION FIELDS */
     CFGF_BUFF_LEN = 0,
     CFGF_BUFF_EN  = 1,
+    /* COMMANDS CONFIGURATION FIELDS */
+    CFGF_CAM_STILL = 0,
+    CFGF_CAM_VID = 1,
     /* MEASURED CHANNELS CONFIGURATION FIELDS */
     CFGF_CHAN_IN_TS    = 0,
     CFGF_CHAN_IN_V0_V1 = 1,
@@ -82,8 +87,11 @@ typedef enum {
     CFG_DEV_IIO      = CFG_DEV_TYPE | CFGF_IIO,      /* 0x04 */
     CFG_DEV_IIO_BUFF = CFG_DEV_TYPE | CFGF_IIO_BUFF, /* 0x05 */
     CFG_DEV_NON_IIO  = CFG_DEV_TYPE | CFGF_DEFAULT,  /* 0x06 */
+    CFG_DEV_CAMERA   = CFG_DEV_TYPE | CFGF_CAMERA,   /* 0x07 */
     CFG_BUFF_LEN     = CFG_BUFF | CFGF_BUFF_LEN,     /* 0x08 */
     CFG_BUFF_EN      = CFG_BUFF | CFGF_BUFF_EN,      /* 0x09 */
+    CFG_CAM_STILL    = CFG_CMD  | CFGF_CAM_STILL,    /* 0x16 */
+    CFG_CAM_VID      = CFG_CMD  | CFGF_CAM_VID,      /* 0x17 */
     CFG_CH_IN_TS            = CFG_MEAS_CHAN | CFGF_CHAN_IN_TS,           /* 0x80 */
     CFG_CH_IN_V0_V1         = CFG_MEAS_CHAN | CFGF_CHAN_IN_V0_V1,        /* 0x81 */
     CFG_CH_IN_V2_V3         = CFG_MEAS_CHAN | CFGF_CHAN_IN_V2_V3,        /* 0x82 */
@@ -101,7 +109,7 @@ typedef enum {
  *********************************************************************************************************************/
 typedef struct {
     cfg_t cfg_type;
-    char val[72];
+    char val[256];
 } cfgtoken_t;
 
 

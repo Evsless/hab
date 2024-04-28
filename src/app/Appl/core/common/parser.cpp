@@ -57,10 +57,15 @@ static const ht_elem_t tokens[] = {
     {"iio", CFGF_IIO},
     {"iio_buff", CFGF_IIO_BUFF},
     {"default", CFGF_DEFAULT},
+    {"camera", CFGF_CAMERA},
     /* BUFFER CONFIG */
     {"buf", CFG_BUFF},
     {"length", CFGF_BUFF_LEN},
     {"enable", CFGF_BUFF_EN},
+    /* CONTROL COMMANDS CONFIG */
+    {"cmd", CFG_CMD},
+    {"cam_still", CFGF_CAM_STILL},
+    {"cam_vid", CFGF_CAM_VID},
     /* MEASURED CHANNELS CONFIG */
     {"ch", CFG_MEAS_CHAN},
     {"in_timestamp_en", CFGF_CHAN_IN_TS},
@@ -132,6 +137,7 @@ cfgtoken_t parser_parse(const char *cfg) {
                 memcpy(token.val, word, sizeof(word));
                 break;
             default:
+                strcat(strcat(token.val, " "), word);
                 break;
         }
         token_idx++;

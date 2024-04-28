@@ -74,6 +74,10 @@ CALLBACK ADS1115_49_CALLBACK(uv_timer_t *handle);
 CALLBACK MLX90614_CALLBACK(uv_timer_t *handle);
 #endif
 
+#ifdef IMX477_01_CALLBACK
+CALLBACK IMX477_01_CALLBACK(uv_timer_t *handle);
+#endif
+
 #endif /* __CALLBACK_H__ */
 
 /***********************************************************************************************************************

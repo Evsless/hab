@@ -189,14 +189,14 @@ stdret_t iiobuff_setup(habdev_t *habdev) {
             fprintf(stdout, "INFO: irq-trigger %s for device found.\n", habdev->trig->name);
     }
 
-
     /* Setting up a trigger for a buffer */
     ret = create_path(file_path, 3, habdev->path.dev_path, "/trigger", "/current_trigger");
     ret = write_file(file_path, habdev->trig->name, sizeof(habdev->trig->name), MOD_W);
 
     ret = create_path(file_path, 2, HAB_BUFF_CFG_PATH, habdev->path.dev_name);
-    while (get_line(file_path, &cfg_pos, line, sizeof(line)) >= 0) {
-        token = parser_parse(line);
+    // while (get_line(file_path, &cfg_pos, line, sizeof(line)) >= 0) {
+    for (int i = 0; habdev->conf[i].cfg_type != -1; i++) {
+        token = habdev->conf[i];
 
         /* Allocate a path to buffer only if it is enabled */
         if (CFG_BUFF_EN == token.cfg_type) {

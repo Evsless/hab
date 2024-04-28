@@ -35,29 +35,8 @@
 
 #include "wheatstone.h"
 #include "ff_detector.h"
+#include "camera.h"
 
-#include <math.h>
-#include <time.h>
-
-// double
-// epoch_double(struct timespec *tv)
-// {
-//   char time_str[32];
-
-//   sprintf(time_str, "%ld.%.9ld", tv->tv_sec, tv->tv_nsec);
-
-//   return atof(time_str);
-// }
-
-// long int
-// epoch_millis(struct timespec *tv)
-// {
-//   double epoch;
-//   epoch = epoch_double(tv);
-//   epoch = round(epoch*1e3);
-
-//   return (long int) epoch;
-// }
 /**********************************************************************************************************************
  *  PREPROCESSOR DEFINITIONS
  *********************************************************************************************************************/
@@ -94,15 +73,8 @@ long int prev = 0;
 
 #ifdef ICM20X_CALLBACK
 CALLBACK ICM20X_CALLBACK(uv_timer_t *handle) {
-    // struct timespec tv;
-    // clock_gettime(CLOCK_REALTIME, &tv);
-
-    // long int ms = epoch_millis(&tv);
-    // printf("TE: %lld\n", ms - prev);
-    // prev = ms;
-
     habdev_t *icm20x_dev = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
-    ffdet_process_frame(icm20x_dev);
+    // ffdet_process_frame(icm20x_dev);
 
 }
 #endif
@@ -133,7 +105,13 @@ CALLBACK MLX90614_CALLBACK(uv_timer_t *handle) {
     habdev_t *habdev = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
     printf("%s\n", habdev->path.dev_name);
 }
+#endif
 
+#ifdef IMX477_01_CALLBACK
+CALLBACK IMX477_01_CALLBACK(uv_timer_t *handle) {
+    habdev_t *habcam_1 = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
+    camera_run(habcam_1);
+}
 #endif
 
 /***********************************************************************************************************************

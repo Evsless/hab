@@ -1,0 +1,2 @@
+type camera
+cmd cam_still libcamera-still --camera 0 -t 0.5 -n -o /home/habmaster/projects/hab_master/test_photo.jpg

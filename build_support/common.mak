@@ -27,6 +27,8 @@ HABDEV_AD5272_2C := ad5272_2c
 HABDEV_AD5272_2E := ad5272_2e
 HABDEV_AD5272_2F := ad5272_2f
 HABDEV_MLX90614 := mlx90614
+HABDEV_CAM_1 := imx477_01
+HABDEV_CAM_2 := imx477_02
 
 HABDEV_LIST := $(HABDEV_MPRLS) \
 				$(HABDEV_ICM20X) \
@@ -36,7 +38,9 @@ HABDEV_LIST := $(HABDEV_MPRLS) \
 				$(HABDEV_AD5272_2C) \
 				$(HABDEV_AD5272_2E) \
 				$(HABDEV_AD5272_2F) \
-				$(HABDEV_MLX90614)
+				$(HABDEV_MLX90614) \
+				$(HABDEV_CAM_1) \
+				$(HABDEV_CAM_2)
 
 ########################################################################################################################
 # DEVICE-EVENT HASHTABLE
@@ -47,6 +51,8 @@ $(HABDEV_SHT40)_EV 			:= $(TIM_CB)
 $(HABDEV_ADS1115_48)_EV 	:= $(TIM_CB)
 $(HABDEV_ADS1115_49)_EV 	:= $(TIM_CB)
 $(HABDEV_MLX90614)_EV 		:= $(TIM_CB)
+$(HABDEV_CAM_1)_EV 			:= $(TIM_CB)
+# $(HABDEV_CAM_2)_EV 			:= $(TIM_CB)
 
 ########################################################################################################################
 # TRIGGER LIST
@@ -76,6 +82,8 @@ TRIG_LIST = $(call remove_repetition,$(_TRIG_LIST))
 ########################################################################################################################
 # Device indexes. Used for identifying a device inside the application
 HABDEV_IDX_ARRAY 	= $(call create_array,$(call indexify,$(HABDEV_LIST)))
+_DEV_NAMES = $(foreach dev,$(HABDEV_LIST),"$(dev)")
+DEV_NAMES = $(call create_array,$(_DEV_NAMES))
 
 # Trigger delay values. Used when registering trigger.
 TRIG_ARRAY 			= $(call create_array,$(subst _,$(EMPTY),$(TRIG_LIST)))
