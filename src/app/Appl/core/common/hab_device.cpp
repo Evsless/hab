@@ -8,8 +8,6 @@
 * PUBLIC FUNCTIONS :                                                                                                  *
 *       habdev_t*           habdev_alloc(void)                                                                        *
 *       stdret_t            habdev_register(habdev_t *habdev, u32 idx)                                                *
-*       void                habdev_ev_set(habdev_t *habdev, ev_t *event)                                              *
-*       void                habdev_trig_set(habdev_t *habdev, habtrig_t *trig)                                        *
 *       habdev_t*           habdev_get(const u32 idx)                                                                 *
 *       void                habdev_free(habdev_t *habdev)                                                             *
 *                                                                                                                     *
@@ -33,20 +31,20 @@
 
 #include "utils.h"
 #include "event.h"
-#include "parser.h"
+#include "callback.h"
 #include "hab_device.h"
-#include "iio_buffer_ops.h"
+
+#include "llist.h"
+#include "cfg_tree.h"
 
 /**********************************************************************************************************************
  *  MACRO
  *********************************************************************************************************************/
-#define IIO_DEV_SYSFS_PATH   "/sys/bus/iio/devices/iio:"
-#define IIO_BUFF_DEVFS_PATH  "/dev/iio:"
+#define IIO_DEV_SYSFS_PATH   "/sys/bus/iio/devices/iio:device"
+#define IIO_BUFF_DEVFS_PATH  "/dev/iio:device"
 #define HAB_DATASTORAGE_PATH "/media/hab_flight_data/"
 #define IIO_DEV_NAME_SUBPATH "/name"
-#define IIO_DEV_ADDR_SUBPATH "/of_node/reg"
-
-#define IIO_DEV_BASENAME "device"
+#define IIO_DEV_SCAN_EL_SUBPATH "scan_elements/"
 
 /**********************************************************************************************************************
  * LOCAL TYPEDEFS DECLARATION
@@ -62,131 +60,160 @@ static usize habdev_count;
 static const char *dev_names[] = HAB_DEV_NAME;
 static const s8 trig_lut[]     = TRIG_LUT;
 
+CALLBACK (*ev_tim_callback_list[])(uv_timer_t *handle) = HAB_CALLBACKS;
+
+static char config_buff[128];
+
 /**********************************************************************************************************************
  * LOCAL FUNCTION DECLARATION
  *********************************************************************************************************************/
-static u8 get_dev_address(const char *of_node_reg);
 
 /**********************************************************************************************************************
  * LOCAL FUNCTION DEFINITION
  *********************************************************************************************************************/
-static u8 get_dev_address(const char *of_node_reg) {
-    u8 ret = 0;
-
-    for (usize cnt = 0; ret == 0; cnt++) {
-        ret = (u8)of_node_reg[cnt];
-    }
-    
-    return ret;
-}
-
-static stdret_t dev_data_setup(habdev_t *habdev) {
-    stdret_t ret = STD_NOT_OK;
-    cfgtoken_t token;
-    dev_type_t dev_type = DEV_UNKNOWN;
-
+static stdret_t add_channel(char **habdev_ch, const char *ch) {
     int alloc_size = 0;
-    usize file_pos = 0;
-    usize data_cnt = 0;
-    char dev_data_buff[256] = {0};
-    // char file_path[128] = {0};
-    char line[64] = {0};
-    const char *chan = NULL;
+    alloc_size = strlen(ch) + 1;
 
-    // snprintf(file_path, sizeof(file_path), "%s%s", HAB_BUFF_CFG_PATH, habdev->path.dev_name);
-    // while (get_line(file_path, &file_pos, line, sizeof(line)) >= 0) {
-    for (int i = 0; habdev->conf[i].cfg_type != -1; i++) {
-        // token = parser_parse(line);
-        token = habdev->conf[i];
-
-        if ((token.cfg_type >> 2) == 1)
-            dev_type = (dev_type_t) (token.cfg_type & 0x03);
-        
-        if ((token.cfg_type >> 7) == 1) {
-            chan = parser_get_chan(token.cfg_type);
-
-            switch (dev_type) {
-                case DEV_IIO:
-                    alloc_size = sizeof(habdev->path.dev_path) + sizeof(chan) + 1;
-                    snprintf(dev_data_buff, alloc_size, "%s/%s", habdev->path.dev_path, chan);
-                    break;
-                case DEV_DEFAULT:
-                    alloc_size = sizeof(token.val);
-                    snprintf(dev_data_buff, alloc_size, "%s", token.val);
-                    break;
-                default:
-                    break;
-            } 
-
-            if ((NULL != chan && dev_type == DEV_IIO) || (token.val[0] != '\0' && dev_type == DEV_DEFAULT) ) {
-                habdev->path.dev_data[data_cnt] = (char *)malloc(alloc_size);
-                if (NULL == habdev->path.dev_data[data_cnt]) {
-                    fprintf(stderr, "ERROR: Error when allocating memory for device data path. Device: %s\n", habdev->path.dev_name);
-                    return STD_NOT_OK;
-                }
-
-                snprintf(habdev->path.dev_data[data_cnt], alloc_size, "%s", dev_data_buff);
-                /* Write an initial value to the channel if it was provided*/
-                if (token.val[0] != '\0')
-                    (void)write_file(habdev->path.dev_data[data_cnt], token.val, sizeof(token.val), MOD_W);
-                data_cnt++;
-            } else {
-                fprintf(stderr, "ERROR: Wrong device configuration. Code: %d\n", token.cfg_type);
-                return STD_NOT_OK;
-            }
-        }
+    *habdev_ch = (char *) malloc(alloc_size);
+    if (NULL == *habdev_ch) {
+        fprintf(stderr, "ERROR: Error allocating data channel for device. Channel: %s\n", ch);
+        return STD_NOT_OK;
     }
+    snprintf(*habdev_ch, alloc_size, "%s", ch);
 
-    return ret;
+    return STD_OK;
 }
 
-static stdret_t register_iio_device(habdev_t *habdev) {
-    stdret_t ret = STD_NOT_OK;
-    char dev_name[16] = {0};
-    char path_buff[64] = {0};
-    char dev_index[8] = {0};
+static stdret_t get_storagebits(habdev_t *habdev, const char *chan) {
+    stdret_t retval = STD_NOT_OK;
+    int bits = 0;
+    int cnt = 0;
 
-    /* Setup a path to iio device in sysfs */
-    snprintf(habdev->path.dev_path, sizeof(habdev->path.dev_path), 
-                "%s%s%d", IIO_DEV_SYSFS_PATH, IIO_DEV_BASENAME, habdev->index);
+    char tmp = '\0';
+    char cfg_path[128] = {0};
+    char ch_format[32] = {0};
+    char dev_path[64] = {0};
 
-    /* Read the device driver name (that is, the module name) */
-    snprintf(path_buff, sizeof(path_buff), "%s%s", habdev->path.dev_path, IIO_DEV_NAME_SUBPATH);
-    ret = read_file(path_buff, dev_name, sizeof(dev_name), MOD_R);
-    CROP_NEWLINE(dev_name, strlen(dev_name));
+    habdev_getDevPath(habdev, dev_path, sizeof(dev_path));
+    snprintf(cfg_path, sizeof(cfg_path), "%s%s%s", dev_path, IIO_DEV_SCAN_EL_SUBPATH, chan);
+    strcpy(cfg_path + (strlen(cfg_path) - 2), "type");
 
-    /* Read the device address (that will be a part of device name) */
-    snprintf(path_buff, sizeof(path_buff), "%s%s", habdev->path.dev_path, IIO_DEV_ADDR_SUBPATH);
-    ret = read_file(path_buff, dev_index, sizeof(dev_name), MOD_R);
+    retval = read_file(cfg_path, ch_format, sizeof(ch_format), MOD_R);
+    if (STD_NOT_OK == retval)
+        return STD_NOT_OK;
+    CROP_NEWLINE(ch_format, strlen(ch_format))
 
-    /* Setup a device name (used when reading configs) */
-    u8 addr = get_dev_address(dev_index);
-    snprintf(habdev->path.dev_name, sizeof(habdev->path.dev_name), "%s-%02x", dev_name, addr);
+    for (cnt = 0; tmp != '/'; cnt++)
+        tmp = ch_format[cnt];
+    
+    for (; ch_format[cnt] != '>'; cnt++)
+        bits = bits * 10 + (ch_format[cnt] - '0');
 
-    /* Setup log path (place where flight data will be stored) */
-    snprintf(habdev->path.log_path, sizeof(habdev->path.log_path), 
-                "%s%s", HAB_DATASTORAGE_PATH, habdev->path.dev_name);
+    habdev->df.storagebits[habdev->df.chan_num++] = bits;
 
-    return ret;
+    return STD_OK;
 }
 
-static stdret_t register_camera(habdev_t *habdev) {
-    u8 data_cnt = 0;
-    strcpy(habdev->path.dev_name, dev_names[habdev->index]);
-    snprintf(habdev->path.log_path, sizeof(habdev->path.log_path), "%s/photos", HAB_DATASTORAGE_PATH);
 
-    for (int i = 0; habdev->conf[i].cfg_type != -1; i++) {
-        /* If configured field is command */
-        if (habdev->conf[i].cfg_type >> 4) {
-            habdev->path.dev_data[data_cnt] = (char *)malloc(sizeof(habdev->conf[i].val));
-            if (habdev->path.dev_data[data_cnt] != NULL) {
-                strcpy(habdev->path.dev_data[data_cnt++], habdev->conf[i].val);
-            } else {
-                fprintf(stderr, "ERROR: Error allocation memory for camera config.\n");
-                return STD_NOT_OK;
-            }
-        }
+static stdret_t write_config(const habdev_t *habdev, node_t *node, int cfg) {
+    stdret_t retval      = STD_OK;
+    const char *cfg_path = NULL;
+    char path_buff[128]  = {0};
+    char dev_path[64]    = {0};
+    int child_cnt        = 0;
+
+    cfg |= cfgtree_getCfgReg(node->type);
+    habdev_getDevPath(habdev, dev_path, sizeof(dev_path));
+
+    switch (cfg & 0xFFFF) {
+    case CFGTREE_BUFF_CONFIG:
+        snprintf(path_buff, sizeof(path_buff), "%s%s", dev_path, "trigger/current_trigger");
+        retval = write_file(path_buff, habdev->trig->name, sizeof(habdev->trig->name), MOD_W);
+        break;
+    case CFGTREE_BUFF_CHAN_NAME_CONFIG:
+        snprintf(config_buff, sizeof(config_buff), "%s%s", IIO_DEV_SCAN_EL_SUBPATH, node->val);
+        break;
+    case CFGTREE_BUFF_CHAN_VAL_CONFIG:
+        snprintf(path_buff, sizeof(path_buff), "%s%s", dev_path, config_buff);
+        retval = write_file(path_buff, node->val, sizeof(node->val), MOD_W);
+        memset(config_buff, 0, sizeof(config_buff));
+        break;
+    case CFGTREE_BUFF_LEN_CONFIG:
+        snprintf(path_buff, sizeof(path_buff), "%s%s", dev_path, "buffer/length");
+        retval = write_file(path_buff, node->val, sizeof(node->val), MOD_W);
+        break;
+    case CFGTREE_BUFF_ENABLE:
+        snprintf(path_buff, sizeof(path_buff), "%s%s", dev_path, "buffer/enable");
+        retval = write_file(path_buff, node->val, sizeof(node->val), MOD_W);
+        break;
+    case CFGTREE_CHAN_NAME_CONFIG:
+        snprintf(config_buff, sizeof(config_buff), "%s", node->val);
+        break;
+    case CFGTREE_CHAN_VAL_CONFIG:
+        snprintf(path_buff, sizeof(path_buff), "%s%s", dev_path, config_buff);
+        retval = write_file(path_buff, node->val, sizeof(node->val), MOD_W);
+        memset(config_buff, 0, sizeof(config_buff));
+        break;
+    default:
+        break;
     }
+
+    if (STD_NOT_OK == retval)
+        return STD_NOT_OK;
+
+    while (child_cnt < node->child_num) {
+        retval = write_config(habdev, node->child[child_cnt++], cfg);
+    }
+
+    return STD_OK;
+}
+
+static stdret_t save_config(habdev_t *habdev, node_t *node, int cfg) {
+    stdret_t retval = STD_OK;
+
+    int child_cnt = 0;
+    char buff[64] = {0};
+
+    cfg |= cfgtree_getCfgReg(node->type);
+
+    /* A device type shall not be considered (0xFFFF mask) */
+    switch (cfg & 0xFFFF) {
+    case CFGTREE_BUFF_CONFIG:
+        snprintf(buff, sizeof(buff), "%s%d", IIO_BUFF_DEVFS_PATH, habdev->index);
+        retval = add_channel(&habdev->path.buffer[habdev->buffer_num++], buff);
+        break;
+    case CFGTREE_CHAN_NAME_CONFIG:
+        snprintf(buff, sizeof(buff), "%s", node->val);
+        retval = add_channel(&habdev->path.channel[habdev->channel_num++], buff);
+        break;
+    case CFGTREE_BUFF_CHAN_NAME_CONFIG:
+        retval = get_storagebits(habdev, node->val);
+        break;
+    case CFGTREE_EVENT:
+        habdev->event = event_alloc();
+        if (NULL == habdev->event)
+            retval = STD_NOT_OK;
+        habdev->event->tim_cb = ev_tim_callback_list[habdev->index];
+        uv_handle_set_data(habdev->event->handle, habdev);
+        break;
+    case CFGTREE_EVENT_TIM_TO_CONFIG:
+        habdev->event->hcfg.tim_ev.tim_to = atoi(node->val);
+        break;
+    case CFGTREE_EVENT_TIM_REP_CONFIG:
+        habdev->event->hcfg.tim_ev.tim_rep = atoi(node->val);
+        break;
+    default:
+        break;   
+    }
+
+    if (STD_NOT_OK == retval)
+        return STD_NOT_OK;
+
+    while(child_cnt < node->child_num) {
+        save_config(habdev, node->child[child_cnt++], cfg);
+    }
+
     return STD_OK;
 }
 
@@ -194,11 +221,43 @@ static stdret_t register_camera(habdev_t *habdev) {
 /**********************************************************************************************************************
  * GLOBAL FUNCTION DEFINITION
  *********************************************************************************************************************/
+void habdev_preinit(void) {
+    cfgtree_initDfa();
+}
+
+
+void habdev_postinit(void) {
+    cfgtree_freeDfa();
+}
+
+void habdev_getDevPath(const habdev_t *habdev, char *buff, usize size) {
+    memset(buff, 0, size);
+
+    switch(habdev->dev_type) {
+    case DEV_IIO:
+    case DEV_IIO_BUFF:
+        snprintf(buff, size, "%s%d/", IIO_DEV_SYSFS_PATH, habdev->index);
+        break;
+    default:
+        break;
+    }
+}
+
+void habdev_getLogPath(const habdev_t *habdev, char *buff, usize size) {
+    memset(buff, 0, size);
+    snprintf(buff, size, "%s%s", HAB_DATASTORAGE_PATH, habdev->path.dev_name);
+}
+
 habdev_t *habdev_alloc(void) {
     habdev_t *habdev = NULL;
 
     habdev = (habdev_t *)malloc(sizeof(habdev_t));
+    if (NULL == habdev){
+        fprintf(stderr, "ERROR: Error allocating the memory for hab device.\n");
+        return NULL;
+    }
 
+    memset(habdev, 0, sizeof(habdev));
     habdev->id = habdev_count;
     habdev_list[habdev_count++] = habdev;
 
@@ -206,45 +265,46 @@ habdev_t *habdev_alloc(void) {
 }
 
 stdret_t habdev_register(habdev_t *habdev, u32 idx) {
-    stdret_t ret = STD_NOT_OK;
-    char path_buff[64] = {0};
-    char line[64] = {0};
-    usize file_pos = 0;
-    u8 cfg_cnt = 0;
+    stdret_t retval = STD_NOT_OK;
+    char path_buff[64]  = {0};
+    char line[64]       = {0};
+    usize file_pos      = 0;
+    int readline_stat   = 0;
 
     habdev->index = idx;
-    memset(habdev->conf, -1, sizeof(habdev->conf));
+    snprintf(habdev->path.dev_name, sizeof(habdev->path.dev_name), "%s", dev_names[habdev->index]);
 
     /* Parse the device configuration and save it */
+    xml_line_t *xml_cfg = llist_init();
     snprintf(path_buff, sizeof(path_buff), "%s%s", HAB_BUFF_CFG_PATH, dev_names[habdev->index]);
-    while(get_line(path_buff, &file_pos, line, sizeof(line)) >= 0)
-        habdev->conf[cfg_cnt++] = parser_parse(line);
+    for (int i = 0; (readline_stat = get_line(path_buff, &file_pos, line, sizeof(line))) >= 0; i++)
+        llist_push(xml_cfg, line);
 
-    if (CFG_DEV_IIO == habdev->conf[0].cfg_type || CFG_DEV_IIO_BUFF == habdev->conf[0].cfg_type) {
-        /* Prepare base device info (sysfs path, dev name, log path)*/
-        ret = register_iio_device(habdev);
+    if (readline_stat == -2)
+        return STD_NOT_OK;
+    
+    cfgtree_dfaReset();
+    habdev->node = cfgtree_init(&xml_cfg);
+    /* First entrance in the config xml file is the device config */
+    habdev->dev_type = (dev_type_t)habdev->node->type;
+    if (habdev->dev_type == DEV_IIO_BUFF)
+        habdev->trig = habtrig_get(trig_lut[habdev->index]);
 
-        /* Setup the buffer only if the device is triggered */
-        if (trig_lut[habdev->index] != -1) {
-            if (NULL != habtrig_get(trig_lut[habdev->index]))
-                habdev->trig = habtrig_get(trig_lut[habdev->index]);
-            ret = iiobuff_setup(habdev);
-        } 
-        else {
-            ret = dev_data_setup(habdev);
-        }
-
-    } else if (CFG_DEV_CAMERA == habdev->conf[0].cfg_type) {
-        ret = register_camera(habdev);
+    retval = save_config(habdev, habdev->node, 0);
+    if (STD_NOT_OK == retval) {
+        fprintf(stderr, "ERROR: Error saving configuration for device: %s\n", habdev->path.dev_name);
+        return STD_NOT_OK;
     }
-    return ret;
-}
 
-void habdev_ev_set(habdev_t *habdev, ev_t *event) {
-    if (NULL != event && NULL != habdev)
-        habdev->event = event;
+    retval = write_config(habdev, habdev->node, 0);
+    if (STD_NOT_OK == retval) {
+        fprintf(stderr, "ERROR: Error writing configuration for device: %s\n", habdev->path.dev_name);
+        return STD_NOT_OK;
+    }
 
-    uv_handle_set_data(event->handle, habdev);
+    llist_free(xml_cfg);
+
+    return retval;
 }
 
 

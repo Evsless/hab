@@ -19,7 +19,7 @@ HAB_KMOD_LIST := $(KMOD_MPRLS0025) 		\
 # DEVICE LIST
 ########################################################################################################################
 HABDEV_MPRLS := mprls0025
-HABDEV_ICM20X := icm20x
+HABDEV_ICM20948 := icm20948
 HABDEV_SHT40 := sht4x
 HABDEV_ADS1115_48 := ads1115_48
 HABDEV_ADS1115_49 := ads1115_49
@@ -31,7 +31,7 @@ HABDEV_CAM_1 := imx477_01
 HABDEV_CAM_2 := imx477_02
 
 HABDEV_LIST := $(HABDEV_MPRLS) \
-				$(HABDEV_ICM20X) \
+				$(HABDEV_ICM20948) \
 				$(HABDEV_SHT40) \
 				$(HABDEV_ADS1115_48) \
 				$(HABDEV_ADS1115_49) \
@@ -46,7 +46,7 @@ HABDEV_LIST := $(HABDEV_MPRLS) \
 # DEVICE-EVENT HASHTABLE
 ########################################################################################################################
 $(HABDEV_MPRLS)_EV 			:= $(TIM_CB)
-$(HABDEV_ICM20X)_EV 		:= $(TIM_CB)
+$(HABDEV_ICM20948)_EV 		:= $(TIM_CB)
 $(HABDEV_SHT40)_EV 			:= $(TIM_CB)
 $(HABDEV_ADS1115_48)_EV 	:= $(TIM_CB)
 $(HABDEV_ADS1115_49)_EV 	:= $(TIM_CB)
@@ -68,7 +68,7 @@ TRIG_0     := _0
 # DEVICE-TRIGGER HASHTABLE
 ########################################################################################################################
 $(HABDEV_MPRLS)_TRIG 		:= $(TRIG_20000)
-$(HABDEV_ICM20X)_TRIG 		:= $(TRIG_500)
+$(HABDEV_ICM20948)_TRIG 	:= $(TRIG_500)
 $(HABDEV_SHT40)_TRIG 		:= $(TRIG_20000)
 $(HABDEV_ADS1115_48)_TRIG 	:= $(TRIG_1000)
 $(HABDEV_ADS1115_49)_TRIG 	:= $(TRIG_5000)

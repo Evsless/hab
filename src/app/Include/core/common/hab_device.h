@@ -10,9 +10,14 @@
 
 habdev_t *habdev_alloc(void);
 habdev_t *habdev_get(const u32 idx);
-void habdev_ev_set(habdev_t *habdev, ev_t *event);
 
 stdret_t habdev_register(habdev_t *dev, u32 idx);
+
+void habdev_getLogPath(const habdev_t *habdev, char *buff, usize size);
+void habdev_getDevPath(const habdev_t *habdev, char *buff, usize size);
+
+void habdev_preinit(void);
+void habdev_postinit(void);
 
 void habdev_free(habdev_t *dev);
 

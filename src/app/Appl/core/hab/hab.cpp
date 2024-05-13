@@ -50,7 +50,7 @@ const u8 ev_tim_device[] = EV_TIM_DEV_IDX;
 
 uv_loop_t *loop;
 
-CALLBACK (*ev_tim_callback_list[])(uv_timer_t *handle) = HAB_CALLBACKS;
+// CALLBACK (*ev_tim_callback_list[])(uv_timer_t *handle) = HAB_CALLBACKS;
 
 /**********************************************************************************************************************
  * LOCAL FUNCTION DECLARATION
@@ -75,7 +75,6 @@ void hab_init(void) {
     stdret_t ret = STD_NOT_OK;
     habtrig_t *habtrig = NULL;
     habdev_t *habdev = NULL;
-    ev_t *event = NULL;
 
     /* 1. TRIGGER SETUP */
     for (int i = 0; i < ARRAY_SIZE(trig_val_list); i++) {
@@ -86,20 +85,18 @@ void hab_init(void) {
     }
 
     /* 2. DEVICE ALLOCATION */
+    habdev_preinit();
     for (int i = 0; i < ARRAY_SIZE(dev_idx_list); i++) {
         habdev = habdev_alloc();
         ret = habdev_register(habdev, dev_idx_list[i]);
-    }
-
-    for (int i = 0; i < ARRAY_SIZE(ev_tim_device); i++) {
-        habdev = habdev_get(ev_tim_device[i]);
     
-        event = event_alloc();
-        habdev_ev_set(habdev, event);
-        ret = ev_setup(habdev);
-    
-        habdev->event->tim_cb = ev_tim_callback_list[i];
+        if (ret == STD_NOT_OK) {
+            fprintf(stderr, "Error registering the device: %s\n", habdev->path.dev_name);
+            /* Error loop instead of exiting? */
+            // exit(-1);
+        }
     }
+    habdev_postinit();
 }
 
 int hab_run(void) {
@@ -108,8 +105,8 @@ int hab_run(void) {
 
     loop = uv_default_loop();
 
-    for (int i = 0; i < ARRAY_SIZE(ev_tim_device); i++) {
-        habdev = habdev_get(ev_tim_device[i]);
+    for (int i = 0; i < ARRAY_SIZE(dev_idx_list); i++) {
+        habdev = habdev_get(i);
         run_tim_ev(habdev);
     }
 

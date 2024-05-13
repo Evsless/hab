@@ -1,5 +1,0 @@
-type iio_buff
-ch in_pressure_en 1
-ch in_timestamp_en 1
-buf length 8
-buf enable 1

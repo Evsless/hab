@@ -12,7 +12,7 @@
 *       CALLBACK            ADS1115_49_CALLBACK(uv_timer_t *handle);                                                  *
 *       CALLBACK            ADS1115_49_CALLBACK(uv_timer_t *handle);                                                  *
 *       CALLBACK            MLX90614_CALLBACK(uv_timer_t *handle);                                                    *
-*       CALLBACK            ICM20X_CALLBACK(uv_timer_t *handle);                                                      *
+*       CALLBACK            ICM20948_CALLBACK(uv_timer_t *handle);                                                      *
 *       CALLBACK            SHT4X_CALLBACK(uv_timer_t *handle);                                                       *
 *                                                                                                                     *
 * AUTHOR :                                                                                                            *
@@ -58,8 +58,8 @@ CALLBACK MPRLS0025_CALLBACK(uv_timer_t *handle);
 CALLBACK SHT4X_CALLBACK(uv_timer_t *handle);
 #endif
 
-#ifdef ICM20X_CALLBACK
-CALLBACK ICM20X_CALLBACK(uv_timer_t *handle);
+#ifdef ICM20948_CALLBACK
+CALLBACK ICM20948_CALLBACK(uv_timer_t *handle);
 #endif
 
 #ifdef ADS1115_48_CALLBACK

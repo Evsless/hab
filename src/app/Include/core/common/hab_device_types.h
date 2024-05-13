@@ -33,8 +33,8 @@
  *  INCLUDES
  *********************************************************************************************************************/
 #include "hab_trig.h"
+#include "cfg_tree.h"
 #include "event_types.h"
-#include "parser.h"
 
 /**********************************************************************************************************************
  *  PREPROCESSOR DEFINITIONS
@@ -46,6 +46,7 @@
 typedef enum {
     DEV_IIO,
     DEV_IIO_BUFF,
+    DEV_CAMERA,
     DEV_DEFAULT,
     DEV_UNKNOWN,
 } dev_type_t;
@@ -55,9 +56,9 @@ typedef enum {
  *********************************************************************************************************************/
 typedef struct {
     char dev_name[16];
-    char dev_path[64];
-    char log_path[64];
-    char *dev_data[16];
+    char *dev_data[16]; /* LEGACY: REMOVE */
+    char *channel[16];
+    char *buffer[4];
 } hab_path_t;
 
 typedef struct {
@@ -73,7 +74,10 @@ typedef struct {
     hab_path_t path;
     habtrig_t *trig;
     data_format_t df;
-    cfgtoken_t conf[32];
+    u32 channel_num;
+    u32 buffer_num;
+    node_t *node;
+    dev_type_t dev_type;
 } habdev_t;
 
 /**********************************************************************************************************************

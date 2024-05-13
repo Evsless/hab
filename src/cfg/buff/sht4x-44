@@ -1,6 +1,0 @@
-type iio_buff
-ch in_humidityrelative_en
-ch in_temp_en
-ch in_timestamp_en
-buf length 8
-buf enable

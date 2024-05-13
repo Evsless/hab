@@ -159,7 +159,8 @@ void ffdet_process_frame(const habdev_t *accel_dev) {
     char data_available_buff[8] = {0};
     int raw_data_samples = 0, accel_samples = 0;
 
-    snprintf(path_buff, sizeof(path_buff), "%s/buffer/data_available", accel_dev->path.dev_path);
+    /* REWRITE TO CORRECTLY EXTRACT BUFFER PATH */
+    // snprintf(path_buff, sizeof(path_buff), "%s/buffer/data_available", accel_dev->path.dev_path);
     (void)read_file(path_buff, data_available_buff, sizeof(data_available_buff), MOD_R);
     CROP_NEWLINE(data_available_buff, strlen(data_available_buff));
 

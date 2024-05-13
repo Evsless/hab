@@ -1,0 +1,12 @@
+<iio_dev>
+    <channels>
+        <chan>
+            <name>out_resistance_raw</name>
+            <val>10</val>
+        </chan>
+        <chan>
+            <name>out_current_raw</name>
+            <val>5</val>
+        </chan>
+    </channels>
+</iio_dev>

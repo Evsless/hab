@@ -10,7 +10,7 @@
 *       CALLBACK            ADS1115_49_CALLBACK(uv_timer_t *handle)                                                   *
 *       CALLBACK            MPRLS0025_CALLBACK(uv_timer_t *handle)                                                    *
 *       CALLBACK            MLX90614_CALLBACK(uv_timer_t *handle)                                                     *
-*       CALLBACK            ICM20X_CALLBACK(uv_timer_t *handle)                                                       *
+*       CALLBACK            ICM20948_CALLBACK(uv_timer_t *handle)                                                       *
 *       CALLBACK            SHT4X_CALLBACK(uv_timer_t *handle)                                                        *
 *                                                                                                                     *
 * AUTHOR :                                                                                                            *
@@ -37,6 +37,7 @@
 #include "ff_detector.h"
 #include "camera.h"
 
+#include "iio_buffer_ops.h"
 /**********************************************************************************************************************
  *  PREPROCESSOR DEFINITIONS
  *********************************************************************************************************************/
@@ -64,16 +65,17 @@
  *********************************************************************************************************************/
 #ifdef MPRLS0025_CALLBACK
 CALLBACK MPRLS0025_CALLBACK(uv_timer_t *handle) {
-    habdev_t *habdev = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
-    printf("%s\n", habdev->path.dev_name);
+    habdev_t *mprls_dev = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
+    (void)iiobuff_log2file(mprls_dev, NULL, NULL);
 }
 #endif
 
 long int prev = 0;
 
-#ifdef ICM20X_CALLBACK
-CALLBACK ICM20X_CALLBACK(uv_timer_t *handle) {
+#ifdef ICM20948_CALLBACK
+CALLBACK ICM20948_CALLBACK(uv_timer_t *handle) {
     habdev_t *icm20x_dev = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
+    printf("%s\n", icm20x_dev->path.dev_name);
     // ffdet_process_frame(icm20x_dev);
 
 }

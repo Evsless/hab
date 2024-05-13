@@ -31,6 +31,8 @@
 
 #define isqr(val) ((val) * (val))
 
+#define HEXDUMP_RECORD_LEN 0x10U
+
 typedef enum {
     MOD_R = 0,
     MOD_W,
@@ -50,8 +52,6 @@ int get_line(const char *filepath, usize *foffset, char *buff, usize size);
 stdret_t hexdump(const char *filepath, const char *buff, usize size, const char *append);
 stdret_t read_file(const char *filepath, char *buff, usize size, file_mode_t fmod);
 stdret_t write_file(const char *filepath, const char *buff, usize size, file_mode_t fmod);
-
-stdret_t create_path(char *base, usize n, ...);
 
 s64 merge_bytes(const u8 *bytes, const u8 bits);
 

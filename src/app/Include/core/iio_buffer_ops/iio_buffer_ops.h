@@ -49,7 +49,6 @@
 /**********************************************************************************************************************
  * GLOBAL FUNCTION DECLARATION
  *********************************************************************************************************************/
-stdret_t iiobuff_setup(habdev_t *habdev);
 int iiobuff_log2file(const habdev_t *habdev, const char *append, u8 *data_cpy);
 int iiobuff_extract_data(data_format_t format, s64 *dst, const u8 *src, const usize size);
 

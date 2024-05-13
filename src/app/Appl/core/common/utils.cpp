@@ -33,7 +33,6 @@
 /**********************************************************************************************************************
  *  PREPROCESSOR DEFINITIONS
  *********************************************************************************************************************/
-#define HEXDUMP_RECORD_LEN 0x10U
 
 /**********************************************************************************************************************
  * GLOBAL VARIABLES DECLARATION
@@ -97,25 +96,26 @@ int get_word(const char *str, usize *pos, char *word, usize size) {
 
 int get_line(const char *filepath, usize *foffset, char *buff, usize size) {
     int ret = 0;
-    char ch;
-    usize i = 0;
+    char ch = '0';
     FILE *filp = NULL;
 
     memset(buff, 0, size);
 
     filp = fopen(filepath, "r");
-    if (NULL == filp)
+    if (NULL == filp) {
+        fprintf(stderr, "ERROR: Error opening the file. File: %s\n", filepath);
         return -2;
+    }
     fseek(filp, *foffset, SEEK_SET);
 
-    for ( ; ch != '\n' && !feof(filp); i++) {
+    for (usize i = 0; ch != '\n' && !feof(filp); i++) {
         ch = fgetc(filp);
         (*foffset)++;
 
         if ('\r' == ch) {
             buff[i] = 0;
         } else if('\n' == ch) {
-            buff[i] = 0;
+            buff[i] = '\n';
             ret = 0;
         } else if(!feof(filp)) {
             buff[i] = ch;
@@ -185,6 +185,7 @@ stdret_t write_file(const char *filepath, const char *buff, usize size, file_mod
     filp = fopen(filepath, file_modes[fmod]);
     if (NULL == filp) {
         fprintf(stderr, "ERROR: Could not open the file for writing - %s\n", filepath);
+        return STD_NOT_OK;
     } else {
         bytes_written = fwrite(buff, sizeof(char), size, filp);
         if (bytes_written == size)
@@ -192,30 +193,6 @@ stdret_t write_file(const char *filepath, const char *buff, usize size, file_mod
     }
     fclose(filp);
 
-    return ret;
-}
-
-stdret_t create_path(char *base, usize n, ...) {
-    stdret_t ret = STD_NOT_OK;
-    char *subpath = NULL;
-    int i = 0;
-
-    va_list list;
-    va_start(list, n);
-
-    memset(base, 0, strlen(base));
-
-    for (i = 0; i < n; i++) {
-        subpath = va_arg(list, char*);
-
-        strcat(base, subpath);
-    }
-
-    va_end(list);
-
-    CROP_NEWLINE(base, strlen(base));
-    
-    ret = STD_OK;
     return ret;
 }
 
