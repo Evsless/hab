@@ -60,9 +60,9 @@ static usize habdev_count;
 static const char *dev_names[] = HAB_DEV_NAME;
 static const s8 trig_lut[]     = TRIG_LUT;
 
-CALLBACK (*ev_tim_callback_list[])(uv_timer_t *handle) = HAB_CALLBACKS;
-
 static char config_buff[128];
+
+extern CALLBACK (*ev_tim_callback_list[64])(uv_timer_t *handle);
 
 /**********************************************************************************************************************
  * LOCAL FUNCTION DECLARATION
@@ -111,6 +111,8 @@ static stdret_t get_storagebits(habdev_t *habdev, const char *chan) {
         bits = bits * 10 + (ch_format[cnt] - '0');
 
     habdev->df.storagebits[habdev->df.chan_num++] = bits;
+    if (0 == str_compare(chan, "in_timestamp_en"))
+        habdev->df.ts_en = true;
 
     return STD_OK;
 }
@@ -166,7 +168,7 @@ static stdret_t write_config(const habdev_t *habdev, node_t *node, int cfg) {
         retval = write_config(habdev, node->child[child_cnt++], cfg);
     }
 
-    return STD_OK;
+    return retval;
 }
 
 static stdret_t save_config(habdev_t *habdev, node_t *node, int cfg) {

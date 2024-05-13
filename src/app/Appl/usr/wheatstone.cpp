@@ -29,7 +29,8 @@
 #include "hab_device.h"
 #include "iio_buffer_ops.h"
 
-#if defined IIO_KMOD_IDX_ADS1115_48 && IIO_KMOD_IDX_ADS1115_48
+#if (defined IIO_KMOD_IDX_ADS1115_48) && (defined IIO_KMOD_IDX_ADS1115_48)
+
 /**********************************************************************************************************************
  *  PREPROCESSOR DEFINITIONS
  *********************************************************************************************************************/
@@ -114,6 +115,7 @@ static whtst_node_t *wheatstone_init(const int adc_index) {
     whtst_node_t *node = NULL;
     habdev_t *digipot_dev = NULL;
     char wiper_buff[8];
+    char dev_path[128] = {0};
 
     node = (whtst_node_t *) malloc(sizeof(whtst_node_t));
     if (NULL != node) {
@@ -131,8 +133,11 @@ static whtst_node_t *wheatstone_init(const int adc_index) {
                 digipot_dev = habdev_get(setup[i].digipot_dev[dgpt]);
                 node->chan[dgpt].digipot = digipot_dev;
 
+                habdev_getDevPath(digipot_dev, dev_path, sizeof(dev_path));
+                strcat(dev_path, digipot_dev->path.channel[0]);
+
                 /* Read initial wiper position */
-                (void)read_file(digipot_dev->path.dev_data[0], wiper_buff, sizeof(wiper_buff), MOD_R);
+                (void)read_file(dev_path, wiper_buff, sizeof(wiper_buff), MOD_R);
                 CROP_NEWLINE(wiper_buff, strlen(wiper_buff));
                 node->chan[dgpt].wiper = atoi(wiper_buff);
             }
@@ -144,7 +149,11 @@ static whtst_node_t *wheatstone_init(const int adc_index) {
 
 static void wiper_change(whtst_chan_t *chan, wiper_op_t wiper_op) {
     char wiper_buff[8] = {0};
+    char dev_path[128] = {0};
     habdev_t *habdev = chan->digipot;
+
+    habdev_getDevPath(habdev, dev_path, sizeof(dev_path));
+    strcat(dev_path, habdev->path.channel[0]);
 
     if (WIPER_INC == wiper_op) {
         if (chan->wiper + 5 < 1024)
@@ -155,7 +164,7 @@ static void wiper_change(whtst_chan_t *chan, wiper_op_t wiper_op) {
     }
     
     snprintf(wiper_buff, sizeof(wiper_buff), "%d", chan->wiper);
-    write_file(habdev->path.dev_data[0], wiper_buff, sizeof(wiper_buff), MOD_W);
+    write_file(dev_path, wiper_buff, sizeof(wiper_buff), MOD_W);
 }
 
 /**********************************************************************************************************************
@@ -171,7 +180,7 @@ void wheatstone_run(const habdev_t *adc_dev) {
 
     if (NULL == node)
         node = wheatstone_init(adc_dev->index);
-    
+
     for (int i = 0; i < node->chan_num; i++)
         snprintf(wiper_pos_buff + strlen(wiper_pos_buff), sizeof(wiper_pos_buff), 
             "%d%c", node->chan[i].wiper, (i == node->chan_num - 1) ? '\0' : ' ');

@@ -166,7 +166,8 @@ void ffdet_process_frame(const habdev_t *accel_dev) {
 
     raw_data_samples = min(4092, atoi(data_available_buff) * 6);
 
-    (void)read_file(accel_dev->path.dev_data[0], (char *)raw_data_buff, raw_data_samples, MOD_RW);
+    /* REWRITE THE DEVICE DATA PATH */
+    // (void)read_file(accel_dev->path.dev_data[0], (char *)raw_data_buff, raw_data_samples, MOD_RW);
     accel_samples = iiobuff_extract_data(accel_dev->df, data_buff, raw_data_buff, raw_data_samples);
     printf("accel_smpl: %d\n", raw_data_samples);
     // printf("----------FRAME-------------\n");

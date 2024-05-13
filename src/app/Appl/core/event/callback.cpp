@@ -50,6 +50,7 @@
 /**********************************************************************************************************************
  * GLOBAL VARIABLES DECLARATION
  *********************************************************************************************************************/
+CALLBACK (*ev_tim_callback_list[64])(uv_timer_t *handle) = HAB_CALLBACKS;
 
 /**********************************************************************************************************************
  * LOCAL FUNCTION DECLARATION
@@ -69,8 +70,6 @@ CALLBACK MPRLS0025_CALLBACK(uv_timer_t *handle) {
     (void)iiobuff_log2file(mprls_dev, NULL, NULL);
 }
 #endif
-
-long int prev = 0;
 
 #ifdef ICM20948_CALLBACK
 CALLBACK ICM20948_CALLBACK(uv_timer_t *handle) {
@@ -97,8 +96,8 @@ CALLBACK ADS1115_48_CALLBACK(uv_timer_t *handle) {
 
 #ifdef ADS1115_49_CALLBACK
 CALLBACK ADS1115_49_CALLBACK(uv_timer_t *handle) {
-    habdev_t *habdev = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
-    printf("%s\n", habdev->path.dev_name);
+    habdev_t *ads1115_49 = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
+    wheatstone_run(ads1115_49);
 }
 #endif
 

@@ -23,7 +23,6 @@ HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/event/callback.cpp
 HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/common/dfa.cpp
 HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/common/utils.cpp
 HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/common/llist.cpp
-# HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/common/parser.cpp
 HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/common/cfg_tree.cpp
 HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/common/hab_device.cpp
 HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/hab_trig/hab_trig.cpp

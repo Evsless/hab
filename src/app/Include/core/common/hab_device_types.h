@@ -56,7 +56,6 @@ typedef enum {
  *********************************************************************************************************************/
 typedef struct {
     char dev_name[16];
-    char *dev_data[16]; /* LEGACY: REMOVE */
     char *channel[16];
     char *buffer[4];
 } hab_path_t;
