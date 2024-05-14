@@ -1,0 +1,18 @@
+<camera_dev>
+    <cam>
+        <still>
+            <val>rpicam-still scnd</val>
+        </still>
+        <vid>
+            <val>rpicam-vid scnd</val>
+        </vid>
+    </cam>
+    <event>
+        <tim_to>
+            <val>10000</val>
+        </tim_to>
+        <tim_rep>
+            <val>10000</val>
+        </tim_rep>
+    </event>
+</camera_dev>

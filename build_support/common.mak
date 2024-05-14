@@ -52,7 +52,7 @@ $(HABDEV_ADS1115_48)_EV 	:= $(TIM_CB)
 $(HABDEV_ADS1115_49)_EV 	:= $(TIM_CB)
 $(HABDEV_MLX90614)_EV 		:= $(TIM_CB)
 $(HABDEV_CAM_1)_EV 			:= $(TIM_CB)
-# $(HABDEV_CAM_2)_EV 			:= $(TIM_CB)
+$(HABDEV_CAM_2)_EV 			:= $(TIM_CB)
 
 ########################################################################################################################
 # TRIGGER LIST

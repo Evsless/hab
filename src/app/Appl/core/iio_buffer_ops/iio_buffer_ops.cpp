@@ -182,9 +182,7 @@ int iiobuff_extract_data(data_format_t format, s64 *dst, const u8 *src, const us
             data_remain -= format.storagebits[chan_cnt] / BYTE;
             j += format.storagebits[chan_cnt++] / BYTE;
             dst[dst_size++] = chan_val;
-            // printf("%ld ", chan_val);
         }
-        // printf("\n");
     }
 
     return dst_size;

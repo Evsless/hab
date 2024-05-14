@@ -16,8 +16,7 @@ GPP_ARG_PREPROC     := $(HABDEV_MACRO_LIST) \
 						-DTRIG_PERIOD_SET='$(TRIG_ARRAY)' \
 						-DTRIG_LUT='$(TRIG_LUT_ARRAY)' \
 						-DEV_TIM_DEV_IDX='$(TIMER_EV_DEV_IDX)' \
-						-DHAB_BUFF_CFG_PATH=$(call to_string,$(HAB_BUFF_CFG_PATH)/) \
-						-DHAB_EV_CFG_PATH=$(call to_string,$(HAB_EV_CFG_PATH)/)
+						-DHAB_BUFF_CFG_PATH=$(call to_string,$(HAB_BUFF_CFG_PATH)/)
 
 
 build_all_hab: $(HABMASTER_BIN_NAME)

@@ -3,7 +3,7 @@
 
 typedef struct xml_line_t
 {
-    char val[64];
+    char val[128];
     struct xml_line_t *next;
 } xml_line_t;
 

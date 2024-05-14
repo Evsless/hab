@@ -205,8 +205,14 @@ static stdret_t save_config(habdev_t *habdev, node_t *node, int cfg) {
     case CFGTREE_EVENT_TIM_REP_CONFIG:
         habdev->event->hcfg.tim_ev.tim_rep = atoi(node->val);
         break;
+    case CFGTREE_CAM_STILL_CONFIG:
+        retval = add_channel(&habdev->path.channel[habdev->channel_num++], node->val);
+        break;
+    case CFGTREE_CAM_VIDEO_CONFIG:
+        retval = add_channel(&habdev->path.channel[habdev->channel_num++], node->val);
+        break;
     default:
-        break;   
+        break;
     }
 
     if (STD_NOT_OK == retval)
@@ -269,7 +275,7 @@ habdev_t *habdev_alloc(void) {
 stdret_t habdev_register(habdev_t *habdev, u32 idx) {
     stdret_t retval = STD_NOT_OK;
     char path_buff[64]  = {0};
-    char line[64]       = {0};
+    char line[128]      = {0};
     usize file_pos      = 0;
     int readline_stat   = 0;
 
