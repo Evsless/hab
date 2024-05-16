@@ -17,17 +17,20 @@
 #define DEV_CONFIG_REG_PATH     0x06 << 4
 #define DEV_CONFIG_REG_CAM_ST   0x07 << 4
 #define DEV_CONFIG_REG_CAM_VID  0x08 << 4
+#define DEV_CONFIG_REG_EV_G_REF 0x09 << 4
 #define DEV_CONFIG_REG_BUFF     0x01 << 12
 #define DEV_CONFIG_REG_CHAN     0x02 << 12
 #define DEV_CONFIG_REG_BUFF_CH  0x03 << 12
 #define DEV_CONFIG_REG_EVENT    0x04 << 12
 #define DEV_CONFIG_REG_CAM      0x05 << 12
 #define DEV_CONFIG_REG_PARAM    0x06 << 12
+#define DEV_CONFIG_REG_INDEX    0x07 << 12
 
 #define DEV_CONFIG_REG_DEVTYPE_DEFAULT 0x00
 #define DEV_CONFIG_REG_DEVTYPE_IIO     0x01 << 16
 #define DEV_CONFIG_REG_DEVTYPE_IIOBUFF 0x02 << 16
 #define DEV_CONFIG_REG_DEVTYPE_CAMERA  0x03 << 16
+#define DEV_CONFIG_REG_GLOBAL_EVENT    0x04 << 16
 
 #define CFGTREE_BUFF_CONFIG             (DEV_CONFIG_REG_BUFF)
 #define CFGTREE_BUFF_ENABLE             (CFGTREE_BUFF_CONFIG | (DEV_CONFIG_REG_ENABLE) | (DEV_CONFIG_REG_VAL))
@@ -39,8 +42,10 @@
 #define CFGTREE_EVENT                   (DEV_CONFIG_REG_EVENT)
 #define CFGTREE_EVENT_TIM_TO_CONFIG     ((DEV_CONFIG_REG_EVENT) | (DEV_CONFIG_REG_TIM_TO) | (DEV_CONFIG_REG_VAL))
 #define CFGTREE_EVENT_TIM_REP_CONFIG    ((DEV_CONFIG_REG_EVENT) | (DEV_CONFIG_REG_TIM_REP) | (DEV_CONFIG_REG_VAL))
+#define CFGTREE_EVENT_GLOBAL_REF_CONFIG ((DEV_CONFIG_REG_EVENT) | (DEV_CONFIG_REG_EV_G_REF) | (DEV_CONFIG_REG_INDEX) | (DEV_CONFIG_REG_VAL))
 #define CFGTREE_CAM_STILL_CONFIG        ((DEV_CONFIG_REG_CAM) | (DEV_CONFIG_REG_CAM_ST) | (DEV_CONFIG_REG_VAL))
 #define CFGTREE_CAM_VIDEO_CONFIG        ((DEV_CONFIG_REG_CAM) | (DEV_CONFIG_REG_CAM_VID) | (DEV_CONFIG_REG_VAL))
+#define CFGTREE_INDEX                   ((DEV_CONFIG_REG_INDEX) | (DEV_CONFIG_REG_VAL))
 
 typedef enum {
     ST_DEFAULT,
@@ -58,12 +63,15 @@ typedef enum {
     CFG_IIO_BUFF_DEV,
     CFG_CAMERA_DEV,
     CFG_DEFAULT_DEV,
+    CFG_EV_GLOBAL,
+    CFG_INDEX,
     CFG_BUFF_T,
     CFG_EVENT,
     CFG_CHANNELS,
     CFG_CAM,
     CFG_TIM_TO,
     CFG_TIM_REP,
+    CFG_EV_GLOBAL_REF,
     CFG_SINGLE_CHAN,
     CFG_CAM_STILL,
     CFG_CAM_VIDEO,
@@ -75,10 +83,10 @@ typedef enum {
 } cfg_type_tree_t;
 
 typedef struct node {
-    cfg_type_tree_t type;
     char val[64];
-    struct node *child[8];
     int child_num;
+    cfg_type_tree_t type;
+    struct node *child[8];
 } node_t;
 
 

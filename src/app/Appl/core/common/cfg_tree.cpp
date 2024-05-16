@@ -42,6 +42,8 @@ cfgtype_ht_t cfgtype_lut[] = {
     {"iio_dev",     CFG_IIO_DEV},
     {"iio_buff_dev", CFG_IIO_BUFF_DEV},
     {"camera_dev",  CFG_CAMERA_DEV},
+    {"ev_global",   CFG_EV_GLOBAL},
+    {"index",       CFG_INDEX},
     {"buff",        CFG_BUFF_T},
     {"channels",    CFG_CHANNELS},
     {"cam",         CFG_CAM},
@@ -55,12 +57,15 @@ cfgtype_ht_t cfgtype_lut[] = {
     {"event",       CFG_EVENT},
     {"tim_to",      CFG_TIM_TO},
     {"tim_rep",     CFG_TIM_REP},
+    {"global_ev_ref", CFG_EV_GLOBAL_REF},
 };
 
 cfgreg_ht_t cfgreg_lut[] = {
     {CFG_IIO_DEV,       DEV_CONFIG_REG_DEVTYPE_IIO},
     {CFG_IIO_BUFF_DEV,  DEV_CONFIG_REG_DEVTYPE_IIOBUFF},
     {CFG_CAMERA_DEV,    DEV_CONFIG_REG_DEVTYPE_CAMERA},
+    {CFG_EV_GLOBAL,     DEV_CONFIG_REG_GLOBAL_EVENT},
+    {CFG_INDEX,         DEV_CONFIG_REG_INDEX},
     {CFG_BUFF_T,        DEV_CONFIG_REG_BUFF},
     {CFG_BUFF_LEN_T,    DEV_CONFIG_REG_LEN},
     {CFG_BUFF_ENABLE,   DEV_CONFIG_REG_ENABLE},
@@ -74,6 +79,7 @@ cfgreg_ht_t cfgreg_lut[] = {
     {CFG_TIM_REP,       DEV_CONFIG_REG_TIM_REP},
     {CFG_FIELD_NAME,    DEV_CONFIG_REG_NAME},
     {CFG_FIELD_VAL,     DEV_CONFIG_REG_VAL},
+    {CFG_EV_GLOBAL_REF, DEV_CONFIG_REG_EV_G_REF},
 };
 
 static char cfg_buffer[128];

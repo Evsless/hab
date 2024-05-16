@@ -1,10 +1,10 @@
 #ifndef __LLIST_H__
 #define __LLIST_H__
 
-typedef struct xml_line_t
+typedef struct xml_line
 {
     char val[128];
-    struct xml_line_t *next;
+    struct xml_line *next;
 } xml_line_t;
 
 xml_line_t *llist_init(void);

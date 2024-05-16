@@ -211,6 +211,9 @@ static stdret_t save_config(habdev_t *habdev, node_t *node, int cfg) {
     case CFGTREE_CAM_VIDEO_CONFIG:
         retval = add_channel(&habdev->path.channel[habdev->channel_num++], node->val);
         break;
+    case CFGTREE_EVENT_GLOBAL_REF_CONFIG:
+        retval = event_addMeasuredDev(atoi(node->val), habdev->index);
+        break;
     default:
         break;
     }
@@ -284,7 +287,7 @@ stdret_t habdev_register(habdev_t *habdev, u32 idx) {
 
     /* Parse the device configuration and save it */
     xml_line_t *xml_cfg = llist_init();
-    snprintf(path_buff, sizeof(path_buff), "%s%s", HAB_BUFF_CFG_PATH, dev_names[habdev->index]);
+    snprintf(path_buff, sizeof(path_buff), "%s%s", HAB_DEV_CFG_PATH, dev_names[habdev->index]);
     for (int i = 0; (readline_stat = get_line(path_buff, &file_pos, line, sizeof(line))) >= 0; i++)
         llist_push(xml_cfg, line);
 

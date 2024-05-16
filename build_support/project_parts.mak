@@ -9,7 +9,10 @@ HAB_INCLUDE_LIST 	+= $(HAB_CORE_INC_PATH)/stdtypes
 HAB_INCLUDE_LIST 	+= $(HAB_CORE_INC_PATH)/hab_trig
 HAB_INCLUDE_LIST 	+= $(HAB_CORE_INC_PATH)/iio_buffer_ops
 
-# 2. USER APPLICATION HEADERS
+# 2. GENERATED DATA HEADERS
+HAB_INCLUDE_LIST	+= $(HAB_OUT_GENERATED_PATH)
+
+# 3. USER APPLICATION HEADERS
 HAB_INCLUDE_LIST 	+= $(HAB_USR_INC_PATH)/
 
 ########################################################################################################################

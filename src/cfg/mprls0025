@@ -17,6 +17,11 @@
             <val>1</val>
         </enable>
     </buff>
+    <channels>
+        <chan>
+            <name>in_pressure_raw</name>
+        </chan>
+    </channels>
     <event>
         <tim_to>
             <val>3000</val>
@@ -24,5 +29,10 @@
         <tim_rep>
             <val>2000</val>
         </tim_rep>
+        <global_ev_ref>
+            <index>
+                <val>0</val>
+            </index>
+        </global_ev_ref>
     </event>
 </iio_buff_dev>

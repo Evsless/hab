@@ -52,7 +52,7 @@ dfa_t *dfa_init(void) {
 
     dfa = (dfa_t *) malloc(sizeof(dfa_t));
     if (NULL != dfa) {
-        memset(dfa, 0, sizeof(dfa));
+        memset(dfa, 0, sizeof(dfa_t));
     } else {
         fprintf(stderr, "ERROR: Error allocating DFA.\n");
     }

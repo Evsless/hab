@@ -51,6 +51,7 @@
  * GLOBAL VARIABLES DECLARATION
  *********************************************************************************************************************/
 CALLBACK (*ev_tim_callback_list[64])(uv_timer_t *handle) = HAB_CALLBACKS;
+CALLBACK (*ev_global_tim_cb[64])(uv_timer_t *handle) = EV_GLOBAL_CB_LIST;
 
 /**********************************************************************************************************************
  * LOCAL FUNCTION DECLARATION
@@ -115,6 +116,13 @@ CALLBACK IMX477_01_CALLBACK(uv_timer_t *handle) {
 }
 #endif
 
+#ifdef EV_MAIN_CALLBACK
+CALLBACK EV_MAIN_CALLBACK(uv_timer_t *handle) {
+    ev_glob_t *ev_main = (ev_glob_t *)uv_handle_get_data((uv_handle_t *)handle);
+    habdev_t *habdev = habdev_get(ev_main->measured_dev[0]);
+    printf("CHUJ %s\n", habdev->path.channel[0]);
+}
+#endif
 /***********************************************************************************************************************
  * END OF FILE
  **********************************************************************************************************************/

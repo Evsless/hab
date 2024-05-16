@@ -33,7 +33,7 @@
  *  INCLUDES
  *********************************************************************************************************************/
 #include <uv.h>
-
+#include "ev_glob.h"
 /**********************************************************************************************************************
  *  PREPROCESSOR DEFINITIONS
  *********************************************************************************************************************/
@@ -76,6 +76,10 @@ CALLBACK MLX90614_CALLBACK(uv_timer_t *handle);
 
 #ifdef IMX477_01_CALLBACK
 CALLBACK IMX477_01_CALLBACK(uv_timer_t *handle);
+#endif
+
+#ifdef EV_MAIN_CALLBACK
+CALLBACK EV_MAIN_CALLBACK(uv_timer_t *handle);
 #endif
 
 #endif /* __CALLBACK_H__ */
