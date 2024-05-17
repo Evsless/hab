@@ -4,10 +4,12 @@
 
 #include "camera.h"
 
+/* FIX TO PATH STORAGE */
+#include "utils.h"
+
 #define CAMERA_STILL_CMD 0
 #define CAMERA_VIDEO_CMD 1
 
-#define MEDIA_PATH     "/media/hab_flight_data"
 #define MEDIA_PHOTOS   "/photos"
 #define MEDIA_VIDEOS   "/videos"
 
@@ -38,11 +40,11 @@ static void get_output_name(media_t media, const char *cam_tag, char *buffer, us
     switch (media) {
     case CAM_STILL:
         snprintf(buffer, size, "%s%s/%s-%s-%llu%s", 
-            MEDIA_PATH, MEDIA_PHOTOS, cam_tag, STILL_BASENAME, (unsigned long long)tim.tv_sec, STILL_FORMAT);
+            HAB_DATASTORAGE_PATH, MEDIA_PHOTOS, cam_tag, STILL_BASENAME, (unsigned long long)tim.tv_sec, STILL_FORMAT);
         break;
     case CAM_VIDEO:
         snprintf(buffer, size, "%s%s/%s-%s-%llu%s", 
-            MEDIA_PATH, MEDIA_VIDEOS, cam_tag, VIDEO_BASENAME, (unsigned long long)tim.tv_sec, VIDEO_FORMAT);
+            HAB_DATASTORAGE_PATH, MEDIA_VIDEOS, cam_tag, VIDEO_BASENAME, (unsigned long long)tim.tv_sec, VIDEO_FORMAT);
         break;
     default:
         break;

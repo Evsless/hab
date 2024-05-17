@@ -33,9 +33,10 @@
 #include "callback.h"
 #include "hab_device.h"
 
+#include "camera.h"
+#include "task_main.h"
 #include "wheatstone.h"
 #include "ff_detector.h"
-#include "camera.h"
 
 #include "iio_buffer_ops.h"
 /**********************************************************************************************************************
@@ -119,8 +120,7 @@ CALLBACK IMX477_01_CALLBACK(uv_timer_t *handle) {
 #ifdef EV_MAIN_CALLBACK
 CALLBACK EV_MAIN_CALLBACK(uv_timer_t *handle) {
     ev_glob_t *ev_main = (ev_glob_t *)uv_handle_get_data((uv_handle_t *)handle);
-    habdev_t *habdev = habdev_get(ev_main->measured_dev[0]);
-    printf("CHUJ %s\n", habdev->path.channel[0]);
+    task_runMain(ev_main);
 }
 #endif
 /***********************************************************************************************************************

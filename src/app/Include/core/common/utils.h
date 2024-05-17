@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include "stdtypes.h"
 
+#define HAB_DATASTORAGE_PATH "/media/hab_flight_data"
+
+
 #define CROP_NEWLINE(str, len) { \
     if ('\n' == str[len - 1])    \
         str[len - 1] = 0;        \

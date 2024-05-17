@@ -42,7 +42,6 @@
  *********************************************************************************************************************/
 #define IIO_DEV_SYSFS_PATH   "/sys/bus/iio/devices/iio:device"
 #define IIO_BUFF_DEVFS_PATH  "/dev/iio:device"
-#define HAB_DATASTORAGE_PATH "/media/hab_flight_data/"
 #define IIO_DEV_NAME_SUBPATH "/name"
 #define IIO_DEV_SCAN_EL_SUBPATH "scan_elements/"
 
@@ -196,7 +195,7 @@ static stdret_t save_config(habdev_t *habdev, node_t *node, int cfg) {
         habdev->event = event_alloc();
         if (NULL == habdev->event)
             retval = STD_NOT_OK;
-        habdev->event->tim_cb = ev_tim_callback_list[habdev->index];
+        habdev->event->tim_cb = ev_tim_callback_list[event_getEvIdx(habdev->index)];
         uv_handle_set_data(habdev->event->handle, habdev);
         break;
     case CFGTREE_EVENT_TIM_TO_CONFIG:
@@ -234,6 +233,7 @@ static stdret_t save_config(habdev_t *habdev, node_t *node, int cfg) {
  *********************************************************************************************************************/
 void habdev_preinit(void) {
     cfgtree_initDfa();
+    event_init();
 }
 
 
@@ -256,7 +256,7 @@ void habdev_getDevPath(const habdev_t *habdev, char *buff, usize size) {
 
 void habdev_getLogPath(const habdev_t *habdev, char *buff, usize size) {
     memset(buff, 0, size);
-    snprintf(buff, size, "%s%s", HAB_DATASTORAGE_PATH, habdev->path.dev_name);
+    snprintf(buff, size, "%s/%s", HAB_DATASTORAGE_PATH, habdev->path.dev_name);
 }
 
 habdev_t *habdev_alloc(void) {

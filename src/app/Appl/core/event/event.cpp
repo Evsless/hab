@@ -36,6 +36,10 @@
 /***********************************************************************************************************************
  * LOCAL TYPEDEFS DECLARATION
  **********************************************************************************************************************/
+typedef struct {
+    int dev_idx;
+    int cb_idx;
+} dev_cb_ht_t;
 
 /***********************************************************************************************************************
  * GLOBAL VARIABLES DECLARATION
@@ -43,8 +47,12 @@
 static ev_glob_t *ev_glob_list[64];
 static usize ev_glob_count = 0;
 
+const u8 ev_tim_device[] = EV_TIM_DEV_IDX;
 const char *ev_glob_name_list[] = EV_GLOB_LIST;
 extern CALLBACK (*ev_global_tim_cb[64])(uv_timer_t *handle);
+
+static dev_cb_ht_t dev_cb_ht[16];
+static usize dev_cb_cnt;
 
 /**********************************************************************************************************************
  * LOCAL FUNCTION DECLARATION
@@ -90,6 +98,14 @@ static stdret_t save_config(ev_glob_t *ev_glob, node_t *node, int cfg) {
 /***********************************************************************************************************************
  * GLOBAL FUNCTION DEFINITION
  **********************************************************************************************************************/
+void event_init(void) {
+    for (usize i = 0; i < ARRAY_SIZE(ev_tim_device); i++) {
+        dev_cb_ht[i].dev_idx = ev_tim_device[i];
+        dev_cb_ht[i].cb_idx = i;
+        dev_cb_cnt++;
+    }
+}
+
 ev_t *event_alloc(void) {
     ev_t *event = NULL;
     uv_handle_t *handle = NULL;
@@ -189,6 +205,27 @@ stdret_t event_addMeasuredDev(const int ev_glob_id, const int habdev_id) {
     ev_glob->measured_dev[ev_glob->measured_dev_no++] = habdev_id;
 
     return STD_OK;
+}
+
+int event_getEvIdx(const int dev_idx) {
+    int retval = -1;
+
+    for (usize i = 0; i < dev_cb_cnt; i++) {
+        if (dev_idx == dev_cb_ht[i].dev_idx) {
+            retval = dev_cb_ht[i].cb_idx;
+            break;
+        }
+    }
+
+    return retval;
+}
+
+usize event_getDevIdx(const int idx) {
+    return dev_cb_ht[idx].dev_idx;
+}
+
+usize event_getDevNum(void) {
+    return dev_cb_cnt;
 }
 
 usize event_getGlobalNum(void) {

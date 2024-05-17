@@ -45,11 +45,7 @@
 const u8  dev_idx_list[]  = HABDEV_IDX_SET;
 const u32 trig_val_list[] = TRIG_PERIOD_SET;
 
-const u8 ev_tim_device[] = EV_TIM_DEV_IDX;
-
 uv_loop_t *loop;
-
-extern CALLBACK (*ev_tim_callback_list[64])(uv_timer_t *handle);
 
 /**********************************************************************************************************************
  * LOCAL FUNCTION DECLARATION
@@ -112,8 +108,8 @@ int hab_run(void) {
 
     loop = uv_default_loop();
 
-    for (int i = 0; NULL != ev_tim_callback_list[i]; i++) {
-        habdev = habdev_get(ev_tim_device[i]);
+    for (int i = 0; i < event_getDevNum(); i++) {
+        habdev = habdev_get(event_getDevIdx(i));
         if (NULL != habdev)
             run_tim_ev(habdev->event);
     }
