@@ -34,6 +34,13 @@
 /**********************************************************************************************************************
  *  PREPROCESSOR DEFINITIONS
  *********************************************************************************************************************/
+#define POT_RESOLUTION   10u
+#define DEB_THRESHOLD    1
+
+#define WIPER_STEP       1
+#define WIPER_MAX_POS    (0x01 << POT_RESOLUTION)
+#define WIPER_MIN_POS    0
+
 #define VOLTAGE_THR_LOW  533
 #define VOLTAGE_THR_HIGH 4500
 
@@ -59,8 +66,8 @@ typedef struct {
 } whtst_node_t;
 
 typedef enum {
-    WIPER_INC,
-    WIPER_DECR,
+    WIPER_OP_INC,
+    WIPER_OP_DECR,
 } wiper_op_t;
 
 /* Below array shall be code generated (in ideal world) */
@@ -155,12 +162,12 @@ static void wiper_change(whtst_chan_t *chan, wiper_op_t wiper_op) {
     habdev_getDevPath(habdev, dev_path, sizeof(dev_path));
     strcat(dev_path, habdev->path.channel[0]);
 
-    if (WIPER_INC == wiper_op) {
-        if (chan->wiper + 5 < 1024)
-            chan->wiper += 5;
+    if (WIPER_OP_INC == wiper_op) {
+        if (chan->wiper + WIPER_STEP < WIPER_MAX_POS)
+            chan->wiper += WIPER_STEP;
     } else {
-        if (chan->wiper - 5 >= 0)
-            chan->wiper -= 5;
+        if (chan->wiper - WIPER_STEP >= WIPER_MIN_POS)
+            chan->wiper -= WIPER_STEP;
     }
     
     snprintf(wiper_buff, sizeof(wiper_buff), "%d", chan->wiper);
@@ -188,7 +195,6 @@ void wheatstone_run(const habdev_t *adc_dev) {
     size = iiobuff_log2file(adc_dev, wiper_pos_buff, data_raw);
     size = iiobuff_extract_data(adc_dev->df, data_frame, data_raw, size);
     
-    
     for (int i = 0; i < node->chan_num; i++)
         node->chan[i].db_count = 0;
 
@@ -205,10 +211,10 @@ void wheatstone_run(const habdev_t *adc_dev) {
     }
 
     for (int i = 0; i < node->chan_num; i++) {
-        if (node->chan[i].db_count > 3)
-            wiper_change(&node->chan[i], WIPER_INC);
-        else if (node->chan[i].db_count < -3)
-            wiper_change(&node->chan[i], WIPER_DECR);
+        if (node->chan[i].db_count > DEB_THRESHOLD)
+            wiper_change(&node->chan[i], WIPER_OP_DECR);
+        else if (node->chan[i].db_count < -DEB_THRESHOLD)
+            wiper_change(&node->chan[i], WIPER_OP_INC);
     }
 }
 #endif

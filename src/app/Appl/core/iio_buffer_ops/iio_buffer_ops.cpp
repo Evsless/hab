@@ -52,7 +52,7 @@
 /**********************************************************************************************************************
  * GLOBAL VARIABLES DECLARATION
  *********************************************************************************************************************/
-static char data_buffer[4096];
+
 
 /**********************************************************************************************************************
  * LOCAL FUNCTION DECLARATION
@@ -123,6 +123,7 @@ int iiobuff_log2file(const habdev_t *habdev, const char *append, u8 *data_cpy) {
     char blen[8] = {0};
     char log_path[64] = {0};
     char dev_path[128] = {0};
+    char data_buffer[4096] = {0};
 
     habdev_getDevPath(habdev, dev_path, sizeof(dev_path));
     strcat(dev_path, BUFF_DATA_RDY_SUBPATH);

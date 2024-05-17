@@ -108,8 +108,15 @@ static stdret_t get_storagebits(habdev_t *habdev, const char *chan) {
     
     for (; ch_format[cnt] != '>'; cnt++)
         bits = bits * 10 + (ch_format[cnt] - '0');
+    
+    /**
+     * UGLY FIX
+     * For now the Timestamp is not analyzed at all.
+     * To make it possibly probably a config param is needed.
+    */
+    if (0 != str_compare(chan, "in_timestamp_en"))
+        habdev->df.storagebits[habdev->df.chan_num++] = bits;
 
-    habdev->df.storagebits[habdev->df.chan_num++] = bits;
     if (0 == str_compare(chan, "in_timestamp_en"))
         habdev->df.ts_en = true;
 
