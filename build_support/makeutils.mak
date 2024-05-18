@@ -75,7 +75,18 @@ indexify = $(foreach elem,$1,$(call get_arr_idx,$(elem),$1))
 #         0 5000 10000
 #     OUTPUT:
 #         {0, 5000, 10000} $(elem)$(COMMA)
-create_array = {$(foreach elem,$1,$(if $(call str-eq,$(elem),$(EMPTY)),$(EMPTY),$(if $(call str-eq,$(elem),$(lastword $1)),$(elem),$(elem)$(COMMA))))}
+create_array = {$(shell array="$1"; \
+	set -- $$array; \
+	last=$$(($$#)); \
+	for number in $$array; do \
+		if [ $$last -gt 1 ]; then \
+			echo -n "$$number, "; \
+		else \
+			echo -n "$$number"; \
+		fi; \
+		last=$$(($$last - 1)); \
+	done)}
+
 
 # FUNCTION: to_string
 #

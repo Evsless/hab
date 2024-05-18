@@ -117,6 +117,13 @@ CALLBACK IMX477_01_CALLBACK(uv_timer_t *handle) {
 }
 #endif
 
+#ifdef IMX477_02_CALLBACK
+CALLBACK IMX477_02_CALLBACK(uv_timer_t *handle) {
+    habdev_t *habcam_2 = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
+    camera_run(habcam_2);
+}
+#endif
+
 #ifdef EV_MAIN_CALLBACK
 CALLBACK EV_MAIN_CALLBACK(uv_timer_t *handle) {
     ev_glob_t *ev_main = (ev_glob_t *)uv_handle_get_data((uv_handle_t *)handle);

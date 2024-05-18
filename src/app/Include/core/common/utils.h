@@ -5,6 +5,7 @@
 #include "stdtypes.h"
 
 #define HAB_DATASTORAGE_PATH "/media/hab_flight_data"
+#define HAB_LED_PATH         "/dev/hab_led"
 
 
 #define CROP_NEWLINE(str, len) { \

@@ -4,15 +4,15 @@
             <val>rpicam-still -v 0 --camera 0 -t 0.5 -n -o</val>
         </still>
         <vid>
-            <val>rpicam-vid -t 5s -v 0 -o</val>
+            <val>rpicam-vid -v 0 --camera 0 -t 8s -n -o</val>
         </vid>
     </cam>
     <event>
         <tim_to>
-            <val>5000</val>
+            <val>60000</val>
         </tim_to>
         <tim_rep>
-            <val>30000</val>
+            <val>60000</val>
         </tim_rep>
     </event>
 </camera_dev>

@@ -14,10 +14,17 @@ IIO_KMOD_LIST := industrialio \
 					crc8
 
 HAB_KMOD_BASENAME_LIST := $(foreach kmod,$(HAB_KMOD_LIST),$(HAB_KLIB_PATH)/$(kmod)/$(kmod))
+MDT_KMOD_BASENAME_LIST := $(foreach kmod,$(MDT_KMOD_LIST),$(HAB_KLIB_PATH)/$(kmod)/$(kmod))
 
 ########################################################################################################################
 # KERNEL MODULES && DEVICE TREE OVERLAY BUILD TARGETS																   #
 ########################################################################################################################
+.PHONIES += build_mdt_kmod
+build_mdt_kmod: $(addsuffix .ko,$(MDT_KMOD_BASENAME_LIST))
+$(addsuffix .ko,$(MDT_KMOD_BASENAME_LIST)): $(addsuffix .c,$(MDT_KMOD_BASENAME_LIST))
+	@make -C /lib/modules/$(shell uname -r)/build M=$(PWD)/$(dir $@) modules
+	@mkdir -p $(HAB_OUT_KLIB_PATH)
+	@ln -f $@ $(HAB_OUT_KLIB_PATH)
 
 .PHONIES += build_kmod
 build_kmod: $(addsuffix .ko,$(HAB_KMOD_BASENAME_LIST))
@@ -37,9 +44,9 @@ $(addsuffix .dtbo,$(HAB_KMOD_BASENAME_LIST)): $(addsuffix .dts,$(HAB_KMOD_BASENA
 
 .PHONIES += clean_all
 clean_all:
-	@$(foreach kdir,$(HAB_KMOD_BASENAME_LIST),\
+	@$(foreach kdir,$(HAB_KMOD_BASENAME_LIST) $(MDT_KMOD_BASENAME_LIST),\
 		make -C /lib/modules/$(shell uname -r)/build M=$(PWD)/$(dir $(kdir)) clean;)
-	@$(foreach kdir,$(HAB_KMOD_BASENAME_LIST),rm -f $(kdir).dtbo)
+	@$(foreach kdir,$(HAB_KMOD_BASENAME_LIST) $(MDT_KMOD_BASENAME_LIST),rm -f $(kdir).dtbo)
 	@rm -rf $(HAB_OUT_KLIB_PATH) $(HAB_OUT_DTOVERLAY_PATH)
 
 
@@ -57,6 +64,13 @@ load_dtoverlay: $(addsuffix .dtbo,$(HAB_KMOD_BASENAME_LIST))
 	@echo "----------------------------------------------"
 
 .PHONIES += load_kmod
+load_mdt_kmod: $(addsuffix .ko,$(MDT_KMOD_BASENAME_LIST))
+	@echo "----------------------------------------------"
+	@$(foreach kmod,$(MDT_KMOD_LIST),\
+		echo "INFO: loading kernel module $(kmod).ko" && sudo insmod $(HAB_OUT_KLIB_PATH)/$(kmod).ko;)
+	@echo "----------------------------------------------"
+
+.PHONIES += load_kmod
 load_kmod: $(addsuffix .ko,$(HAB_KMOD_BASENAME_LIST))
 	@echo "----------------------------------------------"
 	@$(foreach kmod,$(HAB_KMOD_LIST),\
@@ -64,5 +78,5 @@ load_kmod: $(addsuffix .ko,$(HAB_KMOD_BASENAME_LIST))
 	@echo "----------------------------------------------"
 
 .PHONIES += setup_kernel_all
-setup_kernel_all: build_dtoverlay load_dtoverlay build_kmod load_kmod
-	@echo "INFO: Kernel setup finished. Modules loaded: $(HAB_KMOD_LIST)."
+setup_kernel_all: build_dtoverlay load_dtoverlay build_kmod load_kmod build_mdt_kmod load_mdt_kmod
+	@echo "INFO: Kernel setup finished. Modules loaded: $(HAB_KMOD_LIST) $(MDT_KMOD_LIST)."

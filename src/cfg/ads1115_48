@@ -21,6 +21,14 @@
             <val>1</val>
         </enable>
     </buff>
+    <channels>
+        <chan>
+            <name>in_voltage0-voltage1_raw</name>
+        </chan>
+        <chan>
+            <name>in_voltage2-voltage3_raw</name>
+        </chan>
+    </channels>
     <event>
         <tim_to>
             <val>5000</val>
@@ -28,5 +36,10 @@
         <tim_rep>
             <val>10000</val>
         </tim_rep>
+        <global_ev_ref>
+            <index>
+                <val>0</val>
+            </index>
+        </global_ev_ref>
     </event>
 </iio_buff_dev>

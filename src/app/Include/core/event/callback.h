@@ -78,6 +78,10 @@ CALLBACK MLX90614_CALLBACK(uv_timer_t *handle);
 CALLBACK IMX477_01_CALLBACK(uv_timer_t *handle);
 #endif
 
+#ifdef IMX477_02_CALLBACK
+CALLBACK IMX477_02_CALLBACK(uv_timer_t *handle);
+#endif
+
 #ifdef EV_MAIN_CALLBACK
 CALLBACK EV_MAIN_CALLBACK(uv_timer_t *handle);
 #endif

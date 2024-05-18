@@ -37,5 +37,4 @@ test_print:
 	@echo CB_LIST: $(CB_LIST)
 	@echo DEVICE_NAME: $(DEV_NAMES)
 
-
 PHONY: $(PHONIES)

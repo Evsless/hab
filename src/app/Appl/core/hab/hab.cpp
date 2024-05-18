@@ -34,6 +34,9 @@
 #include "hab_device.h"
 #include "iio_buffer_ops.h"
 
+/* UGLY QUICK FIX. REWORK */
+#include <string.h>
+
 /**********************************************************************************************************************
  *  PREPROCESSOR DEFINITIONS
  *********************************************************************************************************************/
@@ -72,6 +75,8 @@ void hab_init(void) {
     habdev_t *habdev = NULL;
     ev_glob_t *event = NULL;
 
+    char led_buff[4] = {0};
+
     /* 1. TRIGGER SETUP */
     for (int i = 0; i < ARRAY_SIZE(trig_val_list); i++) {
         habtrig = habtrig_alloc();
@@ -99,6 +104,9 @@ void hab_init(void) {
         }
     }
     habdev_postinit();
+
+    snprintf(led_buff, sizeof(ret), "%d", ret);
+    write_file(HAB_LED_PATH, led_buff, sizeof(led_buff), MOD_W);
 }
 
 int hab_run(void) {

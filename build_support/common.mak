@@ -15,6 +15,9 @@ HAB_KMOD_LIST := $(KMOD_MPRLS0025) 		\
 					$(KMOD_AD5272) 		\
 					$(KMOD_MLX90614)
 
+MDT_KMOD_LED := hab_led
+MDT_KMOD_LIST := $(MDT_KMOD_LED)
+
 ########################################################################################################################
 # DEVICE LIST
 ########################################################################################################################
@@ -46,7 +49,7 @@ HABDEV_LIST := $(HABDEV_MPRLS) \
 # DEVICE-EVENT HASHTABLE
 ########################################################################################################################
 $(HABDEV_MPRLS)_EV 			:= $(TIM_CB)
-$(HABDEV_ICM20948)_EV 		:= $(TIM_CB)
+# $(HABDEV_ICM20948)_EV 		:= $(TIM_CB)
 $(HABDEV_SHT40)_EV 			:= $(TIM_CB)
 $(HABDEV_ADS1115_48)_EV 	:= $(TIM_CB)
 $(HABDEV_ADS1115_49)_EV 	:= $(TIM_CB)
@@ -82,7 +85,7 @@ TRIG_LIST = $(call remove_repetition,$(_TRIG_LIST))
 ########################################################################################################################
 # Device indexes. Used for identifying a device inside the application
 HABDEV_IDX_ARRAY 	= $(call create_array,$(call indexify,$(HABDEV_LIST)))
-_DEV_NAMES = $(foreach dev,$(HABDEV_LIST),"$(dev)")
+_DEV_NAMES = $(foreach dev,$(HABDEV_LIST),\"$(dev)\")
 DEV_NAMES = $(call create_array,$(_DEV_NAMES))
 
 # Trigger delay values. Used when registering trigger.

@@ -5,4 +5,11 @@
             <val>10</val>
         </chan>
     </channels>
+    <event>
+        <global_ev_ref>
+            <index>
+                <val>0</val>
+            </index>
+        </global_ev_ref>
+    </event>
 </iio_dev>
