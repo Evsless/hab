@@ -70,12 +70,12 @@ TRIG_0     := _0
 ########################################################################################################################
 # DEVICE-TRIGGER HASHTABLE
 ########################################################################################################################
-$(HABDEV_MPRLS)_TRIG 		:= $(TRIG_20000)
-$(HABDEV_ICM20948)_TRIG 	:= $(TRIG_500)
-$(HABDEV_SHT40)_TRIG 		:= $(TRIG_20000)
-$(HABDEV_ADS1115_48)_TRIG 	:= $(TRIG_1000)
+$(HABDEV_MPRLS)_TRIG 		:= $(TRIG_10000)
+# $(HABDEV_ICM20948)_TRIG 	:= $(TRIG_500)
+$(HABDEV_SHT40)_TRIG 		:= $(TRIG_10000)
+$(HABDEV_ADS1115_48)_TRIG 	:= $(TRIG_5000)
 $(HABDEV_ADS1115_49)_TRIG 	:= $(TRIG_5000)
-$(HABDEV_MLX90614)_TRIG 	:= $(TRIG_20000)
+$(HABDEV_MLX90614)_TRIG 	:= $(TRIG_10000)
 
 _TRIG_LIST = $(foreach elem,$(HABDEV_LIST),$($(elem)_TRIG))
 TRIG_LIST = $(call remove_repetition,$(_TRIG_LIST))

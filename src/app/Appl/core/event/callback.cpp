@@ -84,8 +84,8 @@ CALLBACK ICM20948_CALLBACK(uv_timer_t *handle) {
 
 #ifdef SHT4X_CALLBACK
 CALLBACK SHT4X_CALLBACK(uv_timer_t *handle) {
-    habdev_t *habdev = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
-    printf("%s\n", habdev->path.dev_name);
+    habdev_t *sht4x_dev = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
+    (void)iiobuff_log2file(sht4x_dev, NULL, NULL);
 }
 #endif
 
@@ -105,8 +105,8 @@ CALLBACK ADS1115_49_CALLBACK(uv_timer_t *handle) {
 
 #ifdef MLX90614_CALLBACK
 CALLBACK MLX90614_CALLBACK(uv_timer_t *handle) {
-    habdev_t *habdev = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
-    printf("%s\n", habdev->path.dev_name);
+    habdev_t *mlx90614_dev = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
+    (void)iiobuff_log2file(mlx90614_dev, NULL, NULL);
 }
 #endif
 
