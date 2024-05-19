@@ -217,6 +217,41 @@ void wheatstone_run(const habdev_t *adc_dev) {
             wiper_change(&node->chan[i], WIPER_OP_INC);
     }
 }
+
+void wheatstone_runSingleChan(const habdev_t *adc_dev) {
+    whtst_node_t *node = get_wht_node(adc_dev->index);
+
+    int chan_val = 0;
+    char dev_path[128] = {0};
+    char data_buffer[16] = {0};
+
+    if (NULL == node)
+        node = wheatstone_init(adc_dev->index);
+
+    for (int i = 0; i < node->chan_num; i++) {
+        habdev_getDevPath(adc_dev, dev_path, sizeof(dev_path));
+        strcat(dev_path, adc_dev->path.channel[i]);
+
+        (void)read_file(dev_path, data_buffer, sizeof(data_buffer), MOD_R);
+        CROP_NEWLINE(data_buffer, strlen(data_buffer));
+        chan_val = atoi(data_buffer);
+    
+        if (chan_val > VOLTAGE_THR_HIGH) {
+            node->chan[i].db_count++;
+        } else if (chan_val < VOLTAGE_THR_LOW) {
+            node->chan[i].db_count--;
+        } else {
+            if (node->chan[i].db_count != 0)
+                node->chan[i].db_count > 0 ? node->chan[i].db_count-- : node->chan[i].db_count++;
+        }
+
+        if (node->chan[i].db_count > 3)
+            wiper_change(&node->chan[i], WIPER_OP_DECR);
+        else if (node->chan[i].db_count < -3)
+            wiper_change(&node->chan[i], WIPER_OP_INC);
+    }
+}
+
 #endif
 
 /***********************************************************************************************************************

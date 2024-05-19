@@ -45,6 +45,7 @@
  * GLOBAL FUNCTION DECLARATION
  *********************************************************************************************************************/
 void wheatstone_run(const habdev_t *adc_dev);
+void wheatstone_runSingleChan(const habdev_t *adc_dev);
 
 #endif /* __WHEATSTONE_H__ */
 
