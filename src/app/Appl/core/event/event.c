@@ -150,7 +150,7 @@ ev_glob_t *event_allocGlobalEv(void) {
     return ev_glob;
 }
 
-stdret_t event_registerGlobalEv(ev_glob *ev_glob, const u8 index) {
+stdret_t event_registerGlobalEv(ev_glob_t *ev_glob, const u8 index) {
     stdret_t retval = STD_NOT_OK;
     char path_buff[64]  = {0};
     char line[128]      = {0};

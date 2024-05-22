@@ -19,20 +19,20 @@ HAB_INCLUDE_LIST 	+= $(HAB_USR_INC_PATH)/
 # LIST OF SOURCE FILES																								   #
 ########################################################################################################################
 # 1. CORE PLATFORM SRC
-HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/main.cpp
-HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/hab/hab.cpp
-HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/event/event.cpp
-HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/event/callback.cpp
-HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/common/dfa.cpp
-HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/common/utils.cpp
-HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/common/llist.cpp
-HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/common/cfg_tree.cpp
-HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/common/hab_device.cpp
-HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/hab_trig/hab_trig.cpp
-HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/iio_buffer_ops/iio_buffer_ops.cpp
+HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/main.c
+HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/hab/hab.c
+HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/event/event.c
+HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/event/callback.c
+HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/common/dfa.c
+HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/common/utils.c
+HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/common/llist.c
+HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/common/cfg_tree.c
+HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/common/hab_device.c
+HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/hab_trig/hab_trig.c
+HAB_SRC_LIST += $(HAB_CORE_SRC_PATH)/iio_buffer_ops/iio_buffer_ops.c
 
 # 2. USER APPLICATION SRC
-HAB_SRC_LIST += $(HAB_USR_SRC_PATH)/camera.cpp
-HAB_SRC_LIST += $(HAB_USR_SRC_PATH)/task_main.cpp
-HAB_SRC_LIST += $(HAB_USR_SRC_PATH)/wheatstone.cpp
-HAB_SRC_LIST += $(HAB_USR_SRC_PATH)/ff_detector.cpp
+HAB_SRC_LIST += $(HAB_USR_SRC_PATH)/camera.c
+HAB_SRC_LIST += $(HAB_USR_SRC_PATH)/task_main.c
+HAB_SRC_LIST += $(HAB_USR_SRC_PATH)/wheatstone.c
+HAB_SRC_LIST += $(HAB_USR_SRC_PATH)/ff_detector.c

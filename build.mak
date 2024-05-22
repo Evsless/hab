@@ -24,7 +24,7 @@ GPP_ARG_PREPROC     := $(HABDEV_MACRO_LIST) \
 build_all_hab: $(HABMASTER_BIN_NAME)
 $(HABMASTER_BIN_NAME): $(HAB_SRC_LIST)
 	@mkdir -p $(dir $(HABMASTER_BIN_NAME))
-	@g++ -o $(HABMASTER_BIN_NAME) $(HAB_SRC_LIST) $(GPP_ARG_INCLUDE) $(GPP_ARG_PREPROC) -luv -g
+	@gcc -o $(HABMASTER_BIN_NAME) $(HAB_SRC_LIST) $(GPP_ARG_INCLUDE) $(GPP_ARG_PREPROC) -luv -g
 PHONIES += build_all_hab
 
 PHONIES += test_print

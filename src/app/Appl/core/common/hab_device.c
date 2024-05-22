@@ -127,7 +127,7 @@ static stdret_t get_storagebits(habdev_t *habdev, const char *chan) {
 static stdret_t write_config(const habdev_t *habdev, node_t *node, int cfg) {
     stdret_t retval      = STD_OK;
     const char *cfg_path = NULL;
-    char path_buff[128]  = {0};
+    char path_buff[256]  = {0};
     char dev_path[64]    = {0};
     int child_cnt        = 0;
 
