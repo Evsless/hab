@@ -25,11 +25,11 @@
 
 				reset-gpios = <&rp1_gpio 6 0>;
 
-				pinctrl-names = "default";
+				/* pinctrl-names = "default";
 				pinctrl-0 = <&mprls_eoc_5>;
 
 				interrupt-parent = <&rp1_gpio>;
-				interrupts = <5 1>;
+				interrupts = <5 1>; */
 
 				honeywell,pmin-pascal = <0>;
 				honeywell,pmax-pascal = <172369>;

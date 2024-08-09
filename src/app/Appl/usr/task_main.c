@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/stat.h>
 
 #include "utils.h"
@@ -70,6 +71,7 @@ void task_runMain(const ev_glob_t *ev_glob) {
 
             strcat(readout_buff, " ");
             strcat(log_buff, readout_buff);
+            usleep(5000);
         }
     }
     strcat(log_buff, "\n");
