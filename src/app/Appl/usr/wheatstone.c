@@ -23,6 +23,7 @@
  *  INCLUDES
  *********************************************************************************************************************/
 #include <string.h>
+#include <stdio.h>
 
 #include "utils.h"
 #include "wheatstone.h"
@@ -41,8 +42,11 @@
 #define WIPER_MAX_POS    (0x01 << POT_RESOLUTION)
 #define WIPER_MIN_POS    0
 
-#define VOLTAGE_THR_LOW  533
-#define VOLTAGE_THR_HIGH 4500
+#define VOLTAGE_THR_LOW  -1000
+#define VOLTAGE_THR_HIGH 1000
+
+#define UINT16_MAX_VAL 32767U
+#define UINT16_PRESC   65536
 
 /**********************************************************************************************************************
  * LOCAL TYPEDEFS DECLARATION
@@ -92,7 +96,7 @@ whtst_setup_t setup[] = {
 /**********************************************************************************************************************
  * GLOBAL VARIABLES DECLARATION
  *********************************************************************************************************************/
-whtst_node_t *wht_nodes[64];
+whtst_node_t *wht_nodes[64] = {0};
 static int wht_node_cnt;
 
 /**********************************************************************************************************************
@@ -125,6 +129,7 @@ static whtst_node_t *wheatstone_init(const int adc_index) {
     char dev_path[128] = {0};
 
     node = (whtst_node_t *) malloc(sizeof(whtst_node_t));
+    memset(node, 0, sizeof(whtst_node_t));
     if (NULL != node) {
         wht_nodes[wht_node_cnt++] = node;
     } else {
@@ -195,27 +200,27 @@ void wheatstone_run(const habdev_t *adc_dev) {
     size = iiobuff_log2file(adc_dev, wiper_pos_buff, data_raw);
     size = iiobuff_extract_data(adc_dev->df, data_frame, data_raw, size);
     
-    for (int i = 0; i < node->chan_num; i++)
-        node->chan[i].db_count = 0;
+    // for (int i = 0; i < node->chan_num; i++)
+    //     node->chan[i].db_count = 0;
 
-    for (int i = 0; i < size; i++) {
-        channel = i % node->chan_num;
-        if (data_frame[i] > VOLTAGE_THR_HIGH) {
-            node->chan[channel].db_count++;
-        } else if (data_frame[i] < VOLTAGE_THR_LOW) {
-            node->chan[channel].db_count--;
-        } else {
-            if (node->chan[channel].db_count != 0)
-                node->chan[channel].db_count > 0 ? node->chan[channel].db_count-- : node->chan[channel].db_count++;
-        }
-    }
+    // for (int i = 0; i < size; i++) {
+    //     channel = i % node->chan_num;
+    //     if (data_frame[i] > VOLTAGE_THR_HIGH) {
+    //         node->chan[channel].db_count++;
+    //     } else if (data_frame[i] < VOLTAGE_THR_LOW) {
+    //         node->chan[channel].db_count--;
+    //     } else {
+    //         if (node->chan[channel].db_count != 0)
+    //             node->chan[channel].db_count > 0 ? node->chan[channel].db_count-- : node->chan[channel].db_count++;
+    //     }
+    // }
 
-    for (int i = 0; i < node->chan_num; i++) {
-        if (node->chan[i].db_count > DEB_THRESHOLD)
-            wiper_change(&node->chan[i], WIPER_OP_DECR);
-        else if (node->chan[i].db_count < -DEB_THRESHOLD)
-            wiper_change(&node->chan[i], WIPER_OP_INC);
-    }
+    // for (int i = 0; i < node->chan_num; i++) {
+    //     if (node->chan[i].db_count > DEB_THRESHOLD)
+    //         wiper_change(&node->chan[i], WIPER_OP_DECR);
+    //     else if (node->chan[i].db_count < -DEB_THRESHOLD)
+    //         wiper_change(&node->chan[i], WIPER_OP_INC);
+    // }
 }
 
 void wheatstone_runSingleChan(const habdev_t *adc_dev) {
@@ -235,19 +240,24 @@ void wheatstone_runSingleChan(const habdev_t *adc_dev) {
         (void)read_file(dev_path, data_buffer, sizeof(data_buffer), MOD_R);
         CROP_NEWLINE(data_buffer, strlen(data_buffer));
         chan_val = atoi(data_buffer);
-    
+
+        if (chan_val > UINT16_MAX_VAL)
+            chan_val -= UINT16_PRESC;
+        
         if (chan_val > VOLTAGE_THR_HIGH) {
-            node->chan[i].db_count++;
+            if (node->chan[i].db_count < 5)
+                node->chan[i].db_count++;
         } else if (chan_val < VOLTAGE_THR_LOW) {
-            node->chan[i].db_count--;
+            if (node->chan[i].db_count > -5)
+                node->chan[i].db_count--;
         } else {
             if (node->chan[i].db_count != 0)
                 node->chan[i].db_count > 0 ? node->chan[i].db_count-- : node->chan[i].db_count++;
         }
 
-        if (node->chan[i].db_count > 3)
+        if (node->chan[i].db_count > 2)
             wiper_change(&node->chan[i], WIPER_OP_DECR);
-        else if (node->chan[i].db_count < -3)
+        else if (node->chan[i].db_count < -2)
             wiper_change(&node->chan[i], WIPER_OP_INC);
     }
 }

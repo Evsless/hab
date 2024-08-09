@@ -71,7 +71,7 @@ TRIG_0     := _0
 # DEVICE-TRIGGER HASHTABLE
 ########################################################################################################################
 $(HABDEV_MPRLS)_TRIG 		:= $(TRIG_10000)
-# $(HABDEV_ICM20948)_TRIG 	:= $(TRIG_500)
+$(HABDEV_ICM20948)_TRIG 	:= $(TRIG_5000)
 $(HABDEV_SHT40)_TRIG 		:= $(TRIG_10000)
 $(HABDEV_ADS1115_48)_TRIG 	:= $(TRIG_5000)
 $(HABDEV_ADS1115_49)_TRIG 	:= $(TRIG_5000)

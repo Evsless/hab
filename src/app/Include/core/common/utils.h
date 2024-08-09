@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "stdtypes.h"
 
-#define HAB_DATASTORAGE_PATH "/media/hab_flight_data"
+#define HAB_DATASTORAGE_PATH "/home/pi/hab_flight_data"
 #define HAB_LED_PATH         "/dev/hab_led"
 
 

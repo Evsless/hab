@@ -9,7 +9,7 @@
 
 #define HAB_LED_DRIVER_NAME "hab_led"
 #define HAB_LED_CLASS_NAME  "hab_led_class"
-#define HAB_LED_NO_GPIO16   587
+#define HAB_LED_NO_GPIO4    575
 #define HAB_LED_ON_TIME     200
 
 #define FIRST_TOGGLE_DELAY  10u
@@ -45,7 +45,7 @@ static struct timer_list hab_led_tim;
 
 static void hab_led_tim_cb(struct timer_list *data) {
     led_state = !led_state;
-    gpio_set_value(HAB_LED_NO_GPIO16, led_state);
+    gpio_set_value(HAB_LED_NO_GPIO4, led_state);
 
     toggle_counter--;
     if (toggle_counter > 0)
@@ -75,18 +75,18 @@ static int __init hab_led_init(void) {
         goto dev_remove;
     }
 
-    if (gpio_request(HAB_LED_NO_GPIO16, "GPIO16") < 0) {
+    if (gpio_request(HAB_LED_NO_GPIO4, "GPIO16") < 0) {
         pr_err("ERROR: Error allocating gpio pin.\n");
         goto dev_remove_gpio;
     }
-    gpio_direction_output(HAB_LED_NO_GPIO16, 0);
+    gpio_direction_output(HAB_LED_NO_GPIO4, 0);
 
     timer_setup(&hab_led_tim, hab_led_tim_cb, 0);
 
     return 0;
 
 dev_remove_gpio:
-    gpio_free(HAB_LED_NO_GPIO16);
+    gpio_free(HAB_LED_NO_GPIO4);
 
 dev_remove:
     device_destroy(dev_class, dev);
@@ -105,8 +105,8 @@ dev_unreg:
 
 
 static void __exit hab_led_exit(void) {
-    gpio_set_value(HAB_LED_NO_GPIO16, 0);
-    gpio_free(HAB_LED_NO_GPIO16);
+    gpio_set_value(HAB_LED_NO_GPIO4, 0);
+    gpio_free(HAB_LED_NO_GPIO4);
     device_destroy(dev_class, dev);
     class_destroy(dev_class);
     cdev_del(&hab_led_cdev);
@@ -120,7 +120,7 @@ static ssize_t hab_led_read(struct file *filp, char __user *buff, size_t len, lo
 
     to_copy = min(len, sizeof(value));
 
-    value[0] = gpio_get_value(HAB_LED_NO_GPIO16) + '0';
+    value[0] = gpio_get_value(HAB_LED_NO_GPIO4) + '0';
 
     not_copied = copy_to_user(buff, &value, to_copy);
     if (not_copied > 0)

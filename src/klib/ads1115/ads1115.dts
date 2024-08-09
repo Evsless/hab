@@ -30,6 +30,11 @@
 				ti,gain = <0>;
 				ti,datarate = <4>;
 			};
+			channel@1 {
+				reg = <3>;
+				ti,gain = <0>;
+				ti,datarate = <4>;
+			};
 		};
 	};
 

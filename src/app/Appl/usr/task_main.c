@@ -2,11 +2,13 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/stat.h>
 
 #include "utils.h"
 #include "task_main.h"
 #include "hab_device.h"
+#include "wheatstone.h"
 
 #define TASK_MAIN_SUBPATH "/task_main"
 #define TASK_MAIN_LOGFILE "/dev_readout"
@@ -37,7 +39,7 @@ static stdret_t init_measurement(const ev_glob_t *ev_glob) {
     strcat(format_buffer, "\n");
 
     snprintf(path_buffer, sizeof(path_buffer), "%s%s%s", HAB_DATASTORAGE_PATH, TASK_MAIN_SUBPATH, TASK_MAIN_LOGFILE);
-    retval = write_file(path_buffer, format_buffer, strlen(format_buffer), MOD_W);
+    retval = write_file(path_buffer, format_buffer, strlen(format_buffer), MOD_A);
 
     if (retval == STD_OK)
         log_format_set = 1;
@@ -61,6 +63,8 @@ void task_runMain(const ev_glob_t *ev_glob) {
 
     for (u8 i = 0; i < ev_glob->measured_dev_no; i++) {
         habdev = habdev_get(ev_glob->measured_dev[i]);
+        if ((0 == str_compare(habdev->path.dev_name, "ads1115_48")) || (0 == str_compare(habdev->path.dev_name, "ads1115_49")))
+            wheatstone_runSingleChan(habdev);
         habdev_getDevPath(habdev, dev_path, sizeof(dev_path));
 
         for (u8 ch_no = 0; ch_no < habdev->channel_num; ch_no++) {
@@ -70,6 +74,7 @@ void task_runMain(const ev_glob_t *ev_glob) {
 
             strcat(readout_buff, " ");
             strcat(log_buff, readout_buff);
+            usleep(1000);
         }
     }
     strcat(log_buff, "\n");

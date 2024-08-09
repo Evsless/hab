@@ -6,6 +6,10 @@
                 <val>1</val>
             </chan>
             <chan>
+                <name>in_voltage2-voltage3_en</name>
+                <val>1</val>
+            </chan>
+            <chan>
                 <name>in_timestamp_en</name>
                 <val>1</val>
             </chan>
@@ -20,6 +24,9 @@
     <channels>
         <chan>
             <name>in_voltage0-voltage1_raw</name>
+        </chan>
+        <chan>
+            <name>in_voltage2-voltage3_raw</name>
         </chan>
     </channels>
     <event>

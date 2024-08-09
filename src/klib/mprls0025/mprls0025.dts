@@ -6,8 +6,8 @@
 		target = <&rp1_gpio>;
 		__overlay__ {
 			mprls_eoc_5: mprls_eoc_5 {
+				pins = "gpio26";
 				function = "gpio";
-				pins = "gpio5";
 				bias-pull-up;
 			};
 		};
@@ -29,7 +29,7 @@
 				pinctrl-0 = <&mprls_eoc_5>;
 
 				interrupt-parent = <&rp1_gpio>;
-				interrupts = <5 1>;
+				interrupts = <26 1>;
 
 				honeywell,pmin-pascal = <0>;
 				honeywell,pmax-pascal = <172369>;

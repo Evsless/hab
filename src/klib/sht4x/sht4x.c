@@ -15,8 +15,8 @@
 #define SHT4X_WORD_LEN   2
 
 struct sht4x_chan {
-    s16 humid;
-    s16 temp;
+    u16 humid;
+    u16 temp;
     s64 ts;
 };
 

@@ -57,7 +57,7 @@ static habdev_t *habdev_list[64];
 static usize habdev_count;
 
 static const char *dev_names[] = HAB_DEV_NAME;
-static const s8 trig_lut[]     = TRIG_LUT;
+const s8 trig_lut[]     = TRIG_LUT;
 
 static char config_buff[128];
 

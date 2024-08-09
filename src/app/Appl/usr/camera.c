@@ -17,14 +17,12 @@
 #define STILL_FORMAT   ".jpg"
 
 #define VIDEO_BASENAME "video"
-#define VIDEO_FORMAT   ".mp4"
+#define VIDEO_FORMAT   ".mkv"
 
 #define VIDEO_COUNTDOWN 3U
 
 
-static u8 video_counter = VIDEO_COUNTDOWN;
-
-
+int dev_counters[2] = {VIDEO_COUNTDOWN, VIDEO_COUNTDOWN};
 
 typedef enum {
     CAM_STILL,
@@ -55,17 +53,22 @@ void camera_run(const habdev_t *habdev) {
     u8 op = 0;
     char output_path[128] = {0};
     char action_cmd[256] = {0};
+    int curr_idx = 0;
+    if (0 == str_compare(habdev->path.dev_name, "imx477_01"))
+        curr_idx = 0;
+    else
+        curr_idx = 1;
 
     if (NULL != habdev->path.channel[CAMERA_VIDEO_CMD])
-        video_counter--;
+        dev_counters[curr_idx]--;
 
-    if (video_counter > 0) {
+    if (dev_counters[curr_idx] > 0) {
         get_output_name(CAM_STILL, habdev->path.dev_name, output_path, sizeof(output_path));
         op = CAMERA_STILL_CMD;
     } else {
         get_output_name(CAM_VIDEO, habdev->path.dev_name, output_path, sizeof(output_path));
         op = CAMERA_VIDEO_CMD;
-        video_counter = VIDEO_COUNTDOWN;
+        dev_counters[curr_idx] = VIDEO_COUNTDOWN;
     }
 
     snprintf(action_cmd, sizeof(action_cmd), "%s %s", habdev->path.channel[op], output_path);

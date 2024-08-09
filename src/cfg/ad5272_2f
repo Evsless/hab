@@ -2,7 +2,7 @@
     <channels>
         <chan>
             <name>out_resistance_raw</name>
-            <val>10</val>
+            <val>200</val>
         </chan>
     </channels>
     <event>

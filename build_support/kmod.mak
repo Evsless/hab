@@ -46,8 +46,8 @@ $(addsuffix .dtbo,$(HAB_KMOD_BASENAME_LIST)): $(addsuffix .dts,$(HAB_KMOD_BASENA
 clean_all:
 	@$(foreach kdir,$(HAB_KMOD_BASENAME_LIST) $(MDT_KMOD_BASENAME_LIST),\
 		make -C /lib/modules/$(shell uname -r)/build M=$(PWD)/$(dir $(kdir)) clean;)
-	@$(foreach kdir,$(HAB_KMOD_BASENAME_LIST) $(MDT_KMOD_BASENAME_LIST),rm -f $(kdir).dtbo)
-	@rm -rf $(HAB_OUT_KLIB_PATH) $(HAB_OUT_DTOVERLAY_PATH)
+	@$(foreach kdir,$(HAB_KMOD_BASENAME_LIST) $(MDT_KMOD_BASENAME_LIST),sudo rm -f $(kdir).dtbo)
+	@sudo rm -rf $(HAB_OUT_KLIB_PATH) $(HAB_OUT_DTOVERLAY_PATH)
 
 
 ########################################################################################################################
