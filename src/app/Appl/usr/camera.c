@@ -1,6 +1,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
+#include <uv.h>
 
 #include "camera.h"
 
@@ -49,7 +50,8 @@ static void get_output_name(media_t media, const char *cam_tag, char *buffer, us
     }
 }
 
-void camera_run(const habdev_t *habdev) {
+void camera_run(uv_work_t *req) {
+    habdev_t *habdev = (habdev_t *)req->data;
     u8 op = 0;
     char output_path[128] = {0};
     char action_cmd[256] = {0};

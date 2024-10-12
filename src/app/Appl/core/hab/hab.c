@@ -49,6 +49,7 @@ const u8  dev_idx_list[]  = HABDEV_IDX_SET;
 const u32 trig_val_list[] = TRIG_PERIOD_SET;
 
 uv_loop_t *loop;
+uv_work_t work;
 
 /**********************************************************************************************************************
  * LOCAL FUNCTION DECLARATION

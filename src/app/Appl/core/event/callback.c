@@ -53,6 +53,8 @@
  *********************************************************************************************************************/
 CALLBACK (*ev_tim_callback_list[64])(uv_timer_t *handle) = HAB_CALLBACKS;
 CALLBACK (*ev_global_tim_cb[64])(uv_timer_t *handle) = EV_GLOBAL_CB_LIST;
+extern uv_loop_t *loop;
+extern uv_work_t work;
 
 /**********************************************************************************************************************
  * LOCAL FUNCTION DECLARATION
@@ -112,21 +114,25 @@ CALLBACK MLX90614_CALLBACK(uv_timer_t *handle) {
 
 #ifdef IMX477_01_CALLBACK
 CALLBACK IMX477_01_CALLBACK(uv_timer_t *handle) {
+    printf("CAMERA\n");
     habdev_t *habcam_1 = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
-    camera_run(habcam_1);
+    work.data = (void *) habcam_1;
+    uv_queue_work(loop, &work, camera_run, NULL);
 }
 #endif
 
 #ifdef IMX477_02_CALLBACK
 CALLBACK IMX477_02_CALLBACK(uv_timer_t *handle) {
     habdev_t *habcam_2 = (habdev_t *)uv_handle_get_data((uv_handle_t *)handle);
-    camera_run(habcam_2);
+    work.data = (void *) habcam_2;
+    uv_queue_work(loop, &work, camera_run, NULL);
 }
 #endif
 
 #ifdef EV_MAIN_CALLBACK
 CALLBACK EV_MAIN_CALLBACK(uv_timer_t *handle) {
     ev_glob_t *ev_main = (ev_glob_t *)uv_handle_get_data((uv_handle_t *)handle);
+    printf("RUNNING MAIN EV\n");
     task_runMain(ev_main);
 }
 #endif

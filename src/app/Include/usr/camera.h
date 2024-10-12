@@ -3,6 +3,6 @@
 
 #include "hab_device_types.h"
 
-void camera_run(const habdev_t *habdev);
+void camera_run(uv_work_t *req);
 
 #endif /* __CAMERA_H__ */
